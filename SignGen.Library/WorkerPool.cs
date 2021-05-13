@@ -7,6 +7,7 @@ namespace SignGen.Library
     public class WorkerPool<I, O> : IDisposable where I : class where O : class
     {
         private readonly Queue<Worker<I, O>> freeWorkers;
+        private readonly Func<I, O> handler;
 
         private bool disposedValue;
 
@@ -15,25 +16,35 @@ namespace SignGen.Library
             if (threadCount < 1) throw new ArgumentException($"{nameof(threadCount)} can't be lower than 1.");
 
             freeWorkers = new Queue<Worker<I, O>>(threadCount);
+            this.handler = handler;
 
-            for (int i = 0; i < threadCount; i++)
-            {
-                freeWorkers.Enqueue(new Worker<I, O>(handler));
-            }
+           
         }
 
         public void EnqueueResource(I data)
         {
-            Worker<I, O> worker;
+            lock (freeWorkers)
+            {
+                var worker = new Worker<I, O>(handler);
+                freeWorkers.Enqueue(worker);
+                worker.FeedData(data);
 
-
+                Monitor.Pulse(freeWorkers);
+            }
         }
 
         public O DequeueResult()
         {
             O result;
 
-           
+            lock (freeWorkers)
+            {
+                while (freeWorkers.Count == 0) Monitor.Wait(freeWorkers);
+
+                var worker = freeWorkers.Dequeue();
+                result = worker.Result;
+            }
+
             return result;
         }
 

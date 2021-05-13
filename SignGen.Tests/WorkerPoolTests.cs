@@ -43,13 +43,13 @@ namespace SignGen.Tests
             {
                 foreach (var item in input)
                 {
-                    if (workerPool.DequeueResult() != item) failed = true;
+                    var consumed = workerPool.DequeueResult();
+                    if (consumed != item) 
+                        failed = true;
                 }
             });
 
             consumer.Start();
-            Thread.Sleep(200);
-
             producer.Start();
 
             producer.Join();
