@@ -7,6 +7,8 @@ namespace SignGen.Library
 {
     public class SignatureGenerator : IDisposable
     {
+        #region Fields
+
         private readonly TextReader input;
         private readonly TextWriter output;
 
@@ -15,6 +17,9 @@ namespace SignGen.Library
 
         private bool disposedValue;
 
+        #endregion
+
+        #region Constructor
         public SignatureGenerator(TextReader input, TextWriter output) : this(input, output, 4096) { }
         public SignatureGenerator(TextReader input, TextWriter output, int blockSize)
         {
@@ -23,10 +28,31 @@ namespace SignGen.Library
             this.blockSize = blockSize;
         }
 
+        #endregion
+
         public void Start()
         {
             throw new NotImplementedException();
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         protected virtual void Dispose(bool disposing)
         {

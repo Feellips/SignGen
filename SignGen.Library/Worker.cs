@@ -52,6 +52,11 @@ namespace SignGen.Library
             this.workerThread.Start();
         }
 
+        internal bool IsFree()
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion
 
         private void Consume()

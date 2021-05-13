@@ -4,44 +4,41 @@ using System.Threading;
 
 namespace SignGen.Library
 {
-    public class CustomThreadPool : IDisposable
+    public class WorkerPool<I, O> : IDisposable where I : class where O : class
     {
-        private readonly List<Thread> workers;
-        private readonly Action action;
+        private readonly Queue<Worker<I, O>> freeWorkers;
 
         private bool disposedValue;
 
-        public CustomThreadPool(Action action, int threadCount)
+        public WorkerPool(Func<I, O> handler, int threadCount)
         {
             if (threadCount < 1) throw new ArgumentException($"{nameof(threadCount)} can't be lower than 1.");
 
-            this.action = action;
+            freeWorkers = new Queue<Worker<I, O>>(threadCount);
 
-            workers = new List<Thread>(threadCount);
-        }
-
-        public void Begin()
-        {
-            for (int i = 0; i < workers.Capacity; i++)
+            for (int i = 0; i < threadCount; i++)
             {
-                var worker = new Thread(ConsumeResource) { Name = $"Thread {i}" };
-                workers.Add(worker);
-                worker.Start();
+                freeWorkers.Enqueue(new Worker<I, O>(handler));
             }
         }
 
-        private static void Handler(Exception exception)
+        public void EnqueueResource(I data)
         {
-            Console.WriteLine(exception);
+            Worker<I, O> worker;
+
+
         }
 
-        private void ConsumeResource()
+        public O DequeueResult()
         {
-            while (true)
-            {
+            O result;
 
-            }
+           
+            return result;
         }
+
+
+
 
         protected virtual void Dispose(bool disposing)
         {
@@ -49,8 +46,7 @@ namespace SignGen.Library
             {
                 if (disposing)
                 {
-                    //  workers.ForEach(thread => Enqueue(null));
-                    workers.ForEach(thread => thread.Join());
+
                 }
 
                 // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить метод завершения
