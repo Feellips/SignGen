@@ -11,8 +11,8 @@ namespace SignGen
         {
             args.Rules().Validate(); // todo
 
-            var path = @"C:\Users\Ffedyushin\Downloads\ALT BİLEZİK.SLDPRT";
-            var blockSize = 1024;
+            var path = @"C:\ProgramData\Autodesk\Inventor 2021\Content Center\Libraries\AI2021_Inventor OTHER.idcl";
+            var blockSize = 4096;
 
             using var input = File.Open(path, FileMode.Open, FileAccess.Read);
             using var sMem = new MemoryStream();

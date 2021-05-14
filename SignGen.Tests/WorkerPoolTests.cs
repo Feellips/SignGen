@@ -1,5 +1,8 @@
 using System;
+using System.IO;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using SignGen.Library;
 using Xunit;
@@ -58,6 +61,101 @@ namespace SignGen.Tests
             Assert.False(failed);
         }
 
+        [Fact]
+        private void Test123()
+        {
+            Start();
+        }
+
+        private int GetBufferSize(Stream _fileStream, int blockSize)
+        {
+            return _fileStream.Length - _fileStream.Position < blockSize
+                ? (int)(_fileStream.Length - _fileStream.Position)
+                : blockSize;
+        }
+
+        private byte[] GetDataBlock(Stream input, int size)
+        {
+            var buffer = new byte[size];
+            input.Read(buffer, 0, buffer.Length);
+
+            return buffer;
+        }
+
+        public static string GetHash(byte[] input)
+        {
+            var hashAlgorithm = MD5.Create();
+            var data = hashAlgorithm.ComputeHash(input);
+            var sBuilder = new StringBuilder();
+
+            foreach (var item in data)
+            {
+                sBuilder.Append(item.ToString("x2"));
+            }
+
+            return sBuilder.ToString();
+        }
+
+        public void Start()
+        {
+            var pool = new WorkerPool<byte[], string>(GetHash, 8);
+            var consumerIsDone = false;
+
+            var path = @"C:\ProgramData\Autodesk\Inventor 2021\Content Center\Libraries\AI2021_Inventor ISO.idcl";
+            var blockSize = 4096;
+
+            using var input = File.Open(path, FileMode.Open, FileAccess.Read);
+            using var sMem = new MemoryStream();
+
+            var consumer = new Thread(() =>
+            {
+                int size;
+
+                while ((size = GetBufferSize(input, blockSize)) > 0)
+                {
+                    var dataBlock = GetDataBlock(input, size);
+                    pool.EnqueueResource(dataBlock);
+                }
+
+                consumerIsDone = true;
+            });
+
+
+            var producer = new Thread(() =>
+            {
+                int counter = 0;
+                string item;
+
+                while (!consumerIsDone || pool.AnyBusyWorkers)
+                {
+                    counter++;
+
+                    try
+                    {
+                        item = pool.DequeueResult();
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                        throw;
+                    }
+
+                    item = $"{counter}. {item}";
+                }
+
+            });
+
+
+            consumer.Start();
+            producer.Start();
+
+            consumer.Join();
+            producer.Join();
+
+            pool.Dispose();
+
+            Assert.True(true);
+        }
 
     }
 }

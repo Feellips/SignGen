@@ -61,7 +61,6 @@ namespace SignGen.Library
 
             while (true)
             {
-                bool lockerDataAcquired = false;
                 bool lockerResultAcquired = false;
 
                 lock (lockerData)
@@ -86,8 +85,11 @@ namespace SignGen.Library
                 }
                 finally
                 {
-                    Monitor.Pulse(lockerResult);
-                    Monitor.Exit(lockerResult);
+                    if (Monitor.IsEntered(lockerResult))
+                    {
+                        Monitor.Pulse(lockerResult);
+                        Monitor.Exit(lockerResult);
+                    }
                 }
             }
 

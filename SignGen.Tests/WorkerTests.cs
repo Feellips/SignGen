@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using SignGen.Library;
@@ -51,6 +52,84 @@ namespace SignGen.Tests
         [Fact]
         public void Test11() { Assert.True(ReusabilityTest(testData11, testData2)); }
 
+        [Fact]
+        public void SignGeneratorOneThread()
+        {
+            var worker = new Worker<byte[], string>(SignatureGenerator.GetHash);
+            var consumerIsDone = false;
+
+
+            var path = @"C:\ProgramData\Autodesk\Inventor 2021\Content Center\Libraries\AI2021_Inventor Parker.idcl";
+            var blockSize = 4096;
+
+            using var input = File.Open(path, FileMode.Open, FileAccess.Read);
+            using var sMem = new MemoryStream();
+
+            var consumer = new Thread(() =>
+            {
+                int size;
+
+                while ((size = GetBufferSize(input, blockSize)) > 0)
+                {
+                    var dataBlock = GetDataBlock(input, size);
+                    worker.FeedData(dataBlock);
+                }
+
+                consumerIsDone = true;
+            });
+
+
+            var producer = new Thread(() =>
+            {
+                int counter = 0;
+                string item;
+
+                while (!consumerIsDone)
+                {
+                    counter++;
+
+                    try
+                    {
+                        item = worker.Result;
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                        throw;
+                    }
+
+                    item = $"{counter}. {item}";
+
+                    Console.WriteLine(item);
+                }
+
+            });
+
+
+            consumer.Start();
+            producer.Start();
+
+            consumer.Join();
+            producer.Join();
+
+            worker.Dispose();
+        }
+
+        private byte[] GetDataBlock(Stream input, int size)
+        {
+            var buffer = new byte[size];
+            input.Read(buffer, 0, buffer.Length);
+
+            return buffer;
+        }
+
+        private int GetBufferSize(Stream _fileStream, int blockSize)
+        {
+            return _fileStream.Length - _fileStream.Position < blockSize
+                ? (int)(_fileStream.Length - _fileStream.Position)
+                : blockSize;
+        }
+
 
         private bool SimpleTest(string str)
         {
@@ -75,6 +154,7 @@ namespace SignGen.Tests
 
             return first && second;
         }
+
 
     }
 }
