@@ -11,9 +11,9 @@ namespace SignGen.Library
 
         #region Fields
 
-        private Func<I, O> func;
-
+        private readonly Func<I, O> func;
         private readonly Thread workerThread;
+
         private readonly object lockerData = new object();
         private readonly object lockerResult = new object();
 
@@ -22,7 +22,8 @@ namespace SignGen.Library
 
         private volatile Exception ex;
         private bool disposedValue;
-        private bool ready;
+
+        private bool killSelf;
 
         public Exception Ex => ex;
 
@@ -52,27 +53,44 @@ namespace SignGen.Library
             this.workerThread.Start();
         }
 
-        internal bool IsFree()
-        {
-            throw new NotImplementedException();
-        }
-
         #endregion
 
         private void Consume()
         {
+            I dat;
+
             while (true)
             {
+                bool lockerDataAcquired = false;
+                bool lockerResultAcquired = false;
+
                 lock (lockerData)
                 {
-                    lock (lockerResult)
-                    {
-                        result = func.Invoke(data);
-                        Monitor.Pulse(lockerResult);
-                    }
-                    Monitor.Pulse(lockerData);
+                    if (data == null) Monitor.Wait(lockerData);
+
+                    if (killSelf) return;
+
+                    dat = data;
+
+                }
+
+                Monitor.Enter(lockerResult, ref lockerResultAcquired);
+
+                try
+                {
+                    result = func.Invoke(dat);
+                }
+                catch (Exception e)
+                {
+                    ex = e;
+                }
+                finally
+                {
+                    Monitor.Pulse(lockerResult);
+                    Monitor.Exit(lockerResult);
                 }
             }
+
         }
 
 
@@ -88,37 +106,26 @@ namespace SignGen.Library
         }
 
 
-        public void Clear()
-        {
-
-        }
-
-
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
                 if (disposing)
                 {
-                    // TODO: освободить управляемое состояние (управляемые объекты)
+                    if (workerThread.IsAlive)
+                    {
+                        killSelf = true;
+                        lock (lockerData) Monitor.Pulse(lockerData);
+                    }
+
                 }
 
-                // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить метод завершения
-                // TODO: установить значение NULL для больших полей
                 disposedValue = true;
             }
         }
 
-        // // TODO: переопределить метод завершения, только если "Dispose(bool disposing)" содержит код для освобождения неуправляемых ресурсов
-        // ~Worker()
-        // {
-        //     // Не изменяйте этот код. Разместите код очистки в методе "Dispose(bool disposing)".
-        //     Dispose(disposing: false);
-        // }
-
         public void Dispose()
         {
-            // Не изменяйте этот код. Разместите код очистки в методе "Dispose(bool disposing)".
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }

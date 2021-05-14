@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 
 namespace SignGen.Library
 {
@@ -9,8 +12,8 @@ namespace SignGen.Library
     {
         #region Fields
 
-        private readonly TextReader input;
-        private readonly TextWriter output;
+        private readonly Stream input;
+        private readonly Stream output;
 
         private readonly string path;
         private readonly int blockSize;
@@ -20,8 +23,8 @@ namespace SignGen.Library
         #endregion
 
         #region Constructor
-        public SignatureGenerator(TextReader input, TextWriter output) : this(input, output, 4096) { }
-        public SignatureGenerator(TextReader input, TextWriter output, int blockSize)
+        public SignatureGenerator(Stream input, Stream output) : this(input, output, 4096) { }
+        public SignatureGenerator(Stream input, Stream output, int blockSize)
         {
             this.input = input;
             this.output = output;
@@ -30,9 +33,89 @@ namespace SignGen.Library
 
         #endregion
 
+        private int GetBufferSize(Stream _fileStream)
+        {
+            return _fileStream.Length - _fileStream.Position < blockSize
+                ? (int)(_fileStream.Length - _fileStream.Position)
+                : blockSize;
+        }
+
+        private byte[] GetDataBlock(int size)
+        {
+            var buffer = new byte[size];
+            input.Read(buffer, 0, buffer.Length);
+
+            return buffer;
+        }
+
+        private static string GetHash(byte[] input)
+        {
+            var hashAlgorithm = MD5.Create();
+            var data = hashAlgorithm.ComputeHash(input);
+            var sBuilder = new StringBuilder();
+
+            foreach (var item in data)
+            {
+                sBuilder.Append(item.ToString("x2"));
+            }
+
+            return sBuilder.ToString();
+        }
+
         public void Start()
         {
-            throw new NotImplementedException();
+            var pool = new WorkerPool<byte[], string>(GetHash, 8);
+            var consumerIsDone = false;
+
+
+            var consumer = new Thread(() =>
+            {
+                int size;
+
+                while ((size = GetBufferSize(input)) > 0)
+                {
+                    var dataBlock = GetDataBlock(size);
+                    pool.EnqueueResource(dataBlock);
+                }
+
+                consumerIsDone = true;
+            });
+
+
+            var producer = new Thread(() =>
+            {
+                int counter = 0;
+                string item;
+                while (!consumerIsDone || pool.AnyBusyWorkers)
+                {
+                    counter++;
+
+                    try
+                    {
+                        item = pool.DequeueResult();
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                        throw;
+                    }
+
+                    item = $"{counter}. {item}";
+                    var bytes = Encoding.ASCII.GetBytes(item);
+                        
+                    //Console.WriteLine(item);
+                }
+
+            });
+
+
+            consumer.Start();
+            producer.Start();
+
+            consumer.Join();
+            producer.Join();
+
+            pool.Dispose();
         }
 
 

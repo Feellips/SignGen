@@ -28,7 +28,7 @@ namespace SignGen.Tests
         private void SimpleTest()
         {
             var failed = false;
-            var workerPool = new WorkerPool<string, string>(emptyFunc, 8);
+            var workerPool = new WorkerPool<string, string>(emptyFunc, 1);
 
             var producer = new Thread(() =>
             {

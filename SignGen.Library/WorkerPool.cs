@@ -6,64 +6,103 @@ namespace SignGen.Library
 {
     public class WorkerPool<I, O> : IDisposable where I : class where O : class
     {
-        private readonly Queue<Worker<I, O>> freeWorkers;
-        private readonly Func<I, O> handler;
+        private readonly BlockingQueueWrapper<Worker<I, O>> freeWorkers;
+        private readonly BlockingQueueWrapper<Worker<I, O>> busyWorkers;
 
-        private bool disposedValue;
+        private readonly Func<I, O> handler;
+        private readonly int threadCount;
+
+        public bool AnyBusyWorkers => busyWorkers.Count > 0;
 
         public WorkerPool(Func<I, O> handler, int threadCount)
         {
             if (threadCount < 1) throw new ArgumentException($"{nameof(threadCount)} can't be lower than 1.");
 
-            freeWorkers = new Queue<Worker<I, O>>(threadCount);
-            this.handler = handler;
+            freeWorkers = new BlockingQueueWrapper<Worker<I, O>>(threadCount);
+            busyWorkers = new BlockingQueueWrapper<Worker<I, O>>(threadCount);
 
-           
+            this.handler = handler;
+            this.threadCount = threadCount;
+
+            for (int i = 0; i < threadCount; i++)
+            {
+                freeWorkers.Enqueue(new Worker<I, O>(handler));
+            }
+
         }
+
 
         public void EnqueueResource(I data)
         {
+            Worker<I, O> worker;
+
+
+
             lock (freeWorkers)
             {
-                var worker = new Worker<I, O>(handler);
-                freeWorkers.Enqueue(worker);
-                worker.FeedData(data);
+                if (freeWorkers.Count == 0) Monitor.Wait(freeWorkers);
+
+                worker = freeWorkers.Dequeue();
 
                 Monitor.Pulse(freeWorkers);
+            }
+
+            worker.FeedData(data);
+
+            lock (busyWorkers)
+            {
+                busyWorkers.Enqueue(worker);
+
+                Monitor.Pulse(busyWorkers);
             }
         }
 
         public O DequeueResult()
         {
-            O result;
+            Worker<I, O> worker;
+            O data;
+
+            lock (busyWorkers)
+            {
+                if (busyWorkers.Count == 0) Monitor.Wait(busyWorkers);
+
+                worker = busyWorkers.Dequeue();
+
+                Monitor.Pulse(busyWorkers);
+            }
+
+            try
+            {
+                data = worker.Result;
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
 
             lock (freeWorkers)
             {
-                while (freeWorkers.Count == 0) Monitor.Wait(freeWorkers);
-
-                var worker = freeWorkers.Dequeue();
-                result = worker.Result;
+                freeWorkers.Enqueue(worker);
+                Monitor.Pulse(freeWorkers);
             }
 
-            return result;
+            return data;
         }
-
 
 
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (disposing)
             {
-                if (disposing)
+                foreach (Worker<I, O> item in freeWorkers)
                 {
-
-                }
-
-                // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить метод завершения
-                // TODO: установить значение NULL для больших полей
-                disposedValue = true;
+                    item.Dispose();
+                }  
             }
+
+            // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить метод завершения
+            // TODO: установить значение NULL для больших полей
         }
 
         // // TODO: переопределить метод завершения, только если "Dispose(bool disposing)" содержит код для освобождения неуправляемых ресурсов
