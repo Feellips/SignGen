@@ -126,7 +126,7 @@ namespace SignGen.Tests
                 int counter = 0;
                 string item;
 
-                while (!consumerIsDone || pool.AnyBusyWorkers)
+                while (!consumerIsDone)
                 {
                     counter++;
 

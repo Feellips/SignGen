@@ -11,14 +11,16 @@ namespace SignGen.Library
 
         #region Fields
 
-        private readonly Func<I, O> func;
+        private readonly Func<I, O> handler;
         private readonly Thread workerThread;
 
-        private readonly object lockerData = new object();
-        private readonly object lockerResult = new object();
+        private readonly object inLocker;
+        private readonly object outLocker;
 
-        private volatile I data;
-        private volatile O result;
+        private readonly BlockingQueueWrapper<I> workToDo;
+        private readonly BlockingQueueWrapper<O> doneWork;
+
+        private readonly SemaphoreSlim limiter;
 
         private volatile Exception ex;
         private bool disposedValue;
@@ -27,28 +29,22 @@ namespace SignGen.Library
 
         public Exception Ex => ex;
 
-        public O Result
-        {
-            get
-            {
-                lock (lockerResult)
-                {
-                    Monitor.Wait(lockerResult);
-
-                    if (ex != null)
-                        throw ex;
-
-                    return result;
-                }
-            }
-        }
+        public bool IsCompleted => isCompleted && doneWork.Count == 0 && workToDo.Count == 0;
 
         #endregion
 
         #region Constructor
-        public Worker(Func<I, O> func)
+        public Worker(Func<I, O> handler)
         {
-            this.func = func;
+            inLocker = new object();
+            outLocker = new object();
+
+            limiter = new SemaphoreSlim(8);
+
+            workToDo = new BlockingQueueWrapper<I>();
+            doneWork = new BlockingQueueWrapper<O>();
+
+            this.handler = handler;
             this.workerThread = new Thread(Consume);
             this.workerThread.Start();
         }
@@ -57,54 +53,86 @@ namespace SignGen.Library
 
         private void Consume()
         {
-            I dat;
+            I input;
+            O result;
 
             while (true)
             {
-                bool lockerResultAcquired = false;
-
-                lock (lockerData)
+                lock (inLocker)
                 {
-                    if (data == null) Monitor.Wait(lockerData);
+                    if (workToDo.Count == 0) Monitor.Wait(inLocker);
 
                     if (isCompleted) return;
 
-                    dat = data;
-
+                    input = workToDo.Dequeue();
                 }
 
-                Monitor.Enter(lockerResult, ref lockerResultAcquired);
-
-                try
+                lock (outLocker)
                 {
-                    result = func.Invoke(dat);
-                }
-                catch (Exception e)
-                {
-                    ex = e;
-                }
-                finally
-                {
-                    if (Monitor.IsEntered(lockerResult))
+                    try
                     {
-                        Monitor.Pulse(lockerResult);
-                        Monitor.Exit(lockerResult);
+                        result = handler(input);
+                        doneWork.Enqueue(result);
                     }
+                    catch (Exception e)
+                    {
+                        ex = e;
+                        doneWork.Enqueue(null);
+                    }
+
+                    Monitor.Pulse(outLocker);
                 }
+
             }
 
         }
 
 
-
-        public void FeedData(I data)
+        public O RecieveResult()
         {
-            lock (lockerData)
+            O result;
+
+            lock (outLocker)
             {
-                this.data = data;
-                Monitor.Pulse(lockerData);
+                while (doneWork.Count == 0 && !isCompleted) Monitor.Wait(outLocker);
+
+                if (ex != null) throw ex;
+                
+                if (isCompleted) return null;
+
+                result = doneWork.Dequeue();
+
+
+                Monitor.Pulse(outLocker);
+                limiter.Release();
             }
 
+            return result;
+        }
+
+        public void GiveData(I data)
+        {
+            limiter.Wait();
+
+            lock (inLocker)
+            {
+                if (isCompleted)
+                    throw new InvalidOperationException("Queue already stopped");
+
+
+                workToDo.Enqueue(data);
+
+                Monitor.Pulse(inLocker);
+            }
+        }
+
+        public void Stop()
+        {
+            lock (inLocker)
+            {
+                isCompleted = true;
+                Monitor.Pulse(inLocker);
+            }
         }
 
 
@@ -114,12 +142,6 @@ namespace SignGen.Library
             {
                 if (disposing)
                 {
-                    if (workerThread.IsAlive)
-                    {
-                        isCompleted = true;
-                        lock (lockerData) Monitor.Pulse(lockerData);
-                    }
-
                 }
 
                 disposedValue = true;

@@ -48,10 +48,10 @@ namespace SignGen.Library
             return buffer;
         }
 
-        public static string GetHash(byte[] input)
+        public static string GetHash(HashBlock byteBlock)
         {
             var hashAlgorithm = SHA256.Create();
-            var data = hashAlgorithm.ComputeHash(input);
+            var data = hashAlgorithm.ComputeHash(byteBlock.ByteBlock);
             var sBuilder = new StringBuilder();
 
             foreach (var item in data)
@@ -59,51 +59,48 @@ namespace SignGen.Library
                 sBuilder.Append(item.ToString("x2"));
             }
 
-            return sBuilder.ToString();
+            return $"{byteBlock.ID}. {sBuilder.ToString()}";
         }
 
         public void Start()
         {
-            var pool = new WorkerPool<byte[], string>(GetHash, 8);
-
-            var consumerIsDone = false;
+            var pool = new Worker<HashBlock, string>(GetHash);
 
             var consumer = new Thread(() =>
             {
                 int size;
+                int counter = 0;
 
                 while ((size = GetBufferSize(input)) > 0)
                 {
                     var dataBlock = GetDataBlock(size);
-                    pool.EnqueueResource(dataBlock);
+
+                    var hashBlock = new HashBlock(counter++, dataBlock);
+
+                    pool.GiveData(hashBlock);
                 }
 
-                consumerIsDone = true;
+                pool.Stop();
+
             });
 
 
             var producer = new Thread(() =>
             {
-                int counter = 0;
                 string item;
 
-                while (!consumerIsDone || pool.AnyBusyWorkers)
+                try
                 {
-                    counter++;
 
-                    try
+                    while ((item = pool.RecieveResult()) != null)
                     {
-                        item = pool.DequeueResult();
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e);
-                        throw;
+                        Console.WriteLine(item);
                     }
 
-                    item = $"{counter}. {item}";
-                        
-                    //Console.WriteLine(item);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
                 }
 
             });

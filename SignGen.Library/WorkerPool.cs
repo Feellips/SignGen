@@ -6,88 +6,70 @@ namespace SignGen.Library
 {
     public class WorkerPool<I, O> : IDisposable where I : class where O : class
     {
-        private readonly object freeLocker = new object();
-        private readonly object busyLocker = new object();
+        private readonly List<Worker<I, O>> workers;
 
-        private readonly BlockingQueueWrapper<Worker<I, O>> freeWorkers;
-        private readonly BlockingQueueWrapper<Worker<I, O>> busyWorkers;
+        private readonly IEnumerator<Worker<I, O>> producerEnum;
+        private readonly IEnumerator<Worker<I, O>> consumerEnum;
 
         private readonly Func<I, O> handler;
         private readonly int threadCount;
 
-        public bool AnyBusyWorkers => busyWorkers.Count > 0;
+        private bool isEmpty = true;
+
+        public bool IsEmpty => isEmpty;
 
         public WorkerPool(Func<I, O> handler, int threadCount)
         {
             if (threadCount < 1) throw new ArgumentException($"{nameof(threadCount)} can't be lower than 1.");
 
-            freeWorkers = new BlockingQueueWrapper<Worker<I, O>>(threadCount);
-            busyWorkers = new BlockingQueueWrapper<Worker<I, O>>(threadCount);
-
             this.handler = handler;
             this.threadCount = threadCount;
 
+
+            workers = new List<Worker<I, O>>(threadCount);
+
             for (int i = 0; i < threadCount; i++)
-            {
-                freeWorkers.Enqueue(new Worker<I, O>(handler));
-            }
+                workers.Add(new Worker<I, O>(handler));
+
+            producerEnum = workers.GetEnumerator();
+            consumerEnum = workers.GetEnumerator();
 
         }
 
 
         public void EnqueueResource(I data)
         {
-            Worker<I, O> worker;
-
-            lock (freeWorkers)
+            if (!producerEnum.MoveNext())
             {
-                if (freeWorkers.Count == 0) Monitor.Wait(freeWorkers);
-
-                worker = freeWorkers.Dequeue();
-
-                Monitor.Pulse(freeWorkers);
+                producerEnum.Reset();
+                producerEnum.MoveNext();
             }
 
-            worker.FeedData(data);
+            producerEnum.Current.GiveData(data);
 
-            lock (busyWorkers)
-            {
-                busyWorkers.Enqueue(worker);
-
-                Monitor.Pulse(busyWorkers);
-            }
         }
 
         public O DequeueResult()
         {
-            Worker<I, O> worker;
-            O data;
+            O result;
 
-            lock (busyWorkers)
+            if (!consumerEnum.MoveNext())
             {
-                if (busyWorkers.Count == 0) Monitor.Wait(busyWorkers);
-
-                worker = busyWorkers.Dequeue();
-
-                Monitor.Pulse(busyWorkers);
+                consumerEnum.Reset();
+                consumerEnum.MoveNext();
             }
 
             try
             {
-                data = worker.Result;
+               result = consumerEnum.Current.RecieveResult();
             }
-            catch (Exception e)
+            catch (Exception)
             {
+
                 throw;
             }
 
-            lock (freeWorkers)
-            {
-                freeWorkers.Enqueue(worker);
-                Monitor.Pulse(freeWorkers);
-            }
-
-            return data;
+            return result;
         }
 
 
@@ -96,10 +78,10 @@ namespace SignGen.Library
         {
             if (disposing)
             {
-                foreach (Worker<I, O> item in freeWorkers)
+                foreach (var item in workers)
                 {
                     item.Dispose();
-                }  
+                }
             }
 
             // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить метод завершения

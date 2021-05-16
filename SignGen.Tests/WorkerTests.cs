@@ -59,7 +59,7 @@ namespace SignGen.Tests
             var consumerIsDone = false;
 
 
-            var path = @"C:\ProgramData\Autodesk\Inventor 2021\Content Center\Libraries\AI2021_Inventor Parker.idcl";
+            var path = @"C:\Users\PhedyushinPhilipp\Downloads\!PVNDEMIK Galiv - CHANGZ Music Visualization.mp3";
             var blockSize = 4096;
 
             using var input = File.Open(path, FileMode.Open, FileAccess.Read);
@@ -72,7 +72,7 @@ namespace SignGen.Tests
                 while ((size = GetBufferSize(input, blockSize)) > 0)
                 {
                     var dataBlock = GetDataBlock(input, size);
-                    worker.FeedData(dataBlock);
+                    worker.GiveData(dataBlock);
                 }
 
                 consumerIsDone = true;
@@ -90,7 +90,7 @@ namespace SignGen.Tests
 
                     try
                     {
-                        item = worker.Result;
+                        item = worker.RecieveResult();
                     }
                     catch (Exception e)
                     {
@@ -135,22 +135,22 @@ namespace SignGen.Tests
         {
             var worker = new Worker<string, string>(emptyFunc);
 
-            worker.FeedData(str);
+            worker.GiveData(str);
 
-            return str == worker.Result;
+            return str == worker.RecieveResult();
         }
 
         private bool ReusabilityTest(string str, string str2)
         {
             var worker = new Worker<string, string>(emptyFunc);
 
-            worker.FeedData(str);
+            worker.GiveData(str);
 
-            bool first = str == worker.Result;
+            bool first = str == worker.RecieveResult();
 
-            worker.FeedData(str2);
+            worker.GiveData(str2);
 
-            bool second = str2 == worker.Result;
+            bool second = str2 == worker.RecieveResult() ;
 
             return first && second;
         }
