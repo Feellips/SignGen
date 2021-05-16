@@ -50,7 +50,7 @@ namespace SignGen.Library
 
         public static string GetHash(byte[] input)
         {
-            var hashAlgorithm = MD5.Create();
+            var hashAlgorithm = SHA256.Create();
             var data = hashAlgorithm.ComputeHash(input);
             var sBuilder = new StringBuilder();
 
@@ -64,64 +64,9 @@ namespace SignGen.Library
 
         public void Start()
         {
-            //var pool = new WorkerPool<byte[], string>(GetHash, 8);
+            var pool = new WorkerPool<byte[], string>(GetHash, 8);
 
-            var worker = new Worker<byte[], string>(GetHash);
             var consumerIsDone = false;
-
-            var consumer = new Thread(() =>
-            {
-                int size;
-
-                while ((size = GetBufferSize(input, blockSize)) > 0)
-                {
-                    var dataBlock = GetDataBlock(input, size);
-                    worker.FeedData(dataBlock);
-                }
-
-                consumerIsDone = true;
-            });
-
-
-            var producer = new Thread(() =>
-            {
-                int counter = 0;
-                string item;
-
-                while (!consumerIsDone)
-                {
-                    counter++;
-
-                    try
-                    {
-                        item = worker.Result;
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e);
-                        throw;
-                    }
-
-                    item = $"{counter}. {item}";
-
-                    Console.WriteLine(item);
-                }
-
-            });
-
-
-            consumer.Start();
-            producer.Start();
-
-            consumer.Join();
-            producer.Join();
-
-            worker.Dispose();
-
-
-
-
-            return;
 
             var consumer = new Thread(() =>
             {

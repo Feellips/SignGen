@@ -6,6 +6,9 @@ namespace SignGen.Library
 {
     public class WorkerPool<I, O> : IDisposable where I : class where O : class
     {
+        private readonly object freeLocker = new object();
+        private readonly object busyLocker = new object();
+
         private readonly BlockingQueueWrapper<Worker<I, O>> freeWorkers;
         private readonly BlockingQueueWrapper<Worker<I, O>> busyWorkers;
 
@@ -35,8 +38,6 @@ namespace SignGen.Library
         public void EnqueueResource(I data)
         {
             Worker<I, O> worker;
-
-
 
             lock (freeWorkers)
             {

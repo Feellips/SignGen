@@ -65,8 +65,6 @@ namespace SignGen.Library
             }
         }
 
-        #endregion
-
         public IEnumerator GetEnumerator()
         {
             lock (locker)
@@ -74,5 +72,8 @@ namespace SignGen.Library
                 return queue.GetEnumerator();
             }
         }
+
+        #endregion
+
     }
 }

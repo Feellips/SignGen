@@ -20,6 +20,7 @@ namespace SignGen
             using var signGen = new SignatureGenerator(input, sMem, blockSize);
 
             Stopwatch stopWatch = new Stopwatch();
+
             stopWatch.Start();
 
             signGen.Start();

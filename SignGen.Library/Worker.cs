@@ -23,7 +23,7 @@ namespace SignGen.Library
         private volatile Exception ex;
         private bool disposedValue;
 
-        private bool killSelf;
+        private bool isCompleted;
 
         public Exception Ex => ex;
 
@@ -67,7 +67,7 @@ namespace SignGen.Library
                 {
                     if (data == null) Monitor.Wait(lockerData);
 
-                    if (killSelf) return;
+                    if (isCompleted) return;
 
                     dat = data;
 
@@ -116,7 +116,7 @@ namespace SignGen.Library
                 {
                     if (workerThread.IsAlive)
                     {
-                        killSelf = true;
+                        isCompleted = true;
                         lock (lockerData) Monitor.Pulse(lockerData);
                     }
 
