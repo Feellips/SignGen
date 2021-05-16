@@ -65,7 +65,6 @@ namespace SignGen.Library
             }
             catch (Exception)
             {
-
                 throw;
             }
 
@@ -86,6 +85,11 @@ namespace SignGen.Library
 
             // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить метод завершения
             // TODO: установить значение NULL для больших полей
+        }
+
+        internal void Stop()
+        {
+            EnqueueResource(null);
         }
 
         // // TODO: переопределить метод завершения, только если "Dispose(bool disposing)" содержит код для освобождения неуправляемых ресурсов

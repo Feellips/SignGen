@@ -63,15 +63,25 @@ namespace SignGen.Library
                     if (workToDo.Count == 0) Monitor.Wait(inLocker);
 
                     if (isCompleted) return;
-
+                    
                     input = workToDo.Dequeue();
                 }
 
                 lock (outLocker)
                 {
+                   
+
                     try
                     {
-                        result = handler(input);
+                        if (input != null)
+                        {
+                            result = handler(input);
+                        }
+                        else
+                        {
+                            result = null;
+                        }
+
                         doneWork.Enqueue(result);
                     }
                     catch (Exception e)
@@ -97,14 +107,11 @@ namespace SignGen.Library
                 while (doneWork.Count == 0 && !isCompleted) Monitor.Wait(outLocker);
 
                 if (ex != null) throw ex;
-                
-                if (isCompleted) return null;
 
                 result = doneWork.Dequeue();
 
-
                 Monitor.Pulse(outLocker);
-                limiter.Release();
+               // limiter.Release();
             }
 
             return result;
@@ -112,7 +119,7 @@ namespace SignGen.Library
 
         public void GiveData(I data)
         {
-            limiter.Wait();
+          //  limiter.Wait();
 
             lock (inLocker)
             {
@@ -142,6 +149,9 @@ namespace SignGen.Library
             {
                 if (disposing)
                 {
+                    Stop();
+                    workerThread.Join();
+                    limiter.Dispose();
                 }
 
                 disposedValue = true;

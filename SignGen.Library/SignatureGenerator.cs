@@ -8,6 +8,8 @@ using System.Threading;
 
 namespace SignGen.Library
 {
+
+
     public class SignatureGenerator : IDisposable
     {
         #region Fields
@@ -64,7 +66,7 @@ namespace SignGen.Library
 
         public void Start()
         {
-            var pool = new Worker<HashBlock, string>(GetHash);
+            var pool = new WorkerPool<HashBlock, string>(GetHash, 8);
 
             var consumer = new Thread(() =>
             {
@@ -77,24 +79,24 @@ namespace SignGen.Library
 
                     var hashBlock = new HashBlock(counter++, dataBlock);
 
-                    pool.GiveData(hashBlock);
+                    pool.EnqueueResource(hashBlock);
                 }
-
                 pool.Stop();
-
             });
 
 
             var producer = new Thread(() =>
             {
                 string item;
+                string prev = "";
 
                 try
                 {
 
-                    while ((item = pool.RecieveResult()) != null)
+                    while ((item = pool.DequeueResult()) != null)
                     {
-                        Console.WriteLine(item);
+                        //prev = item;
+                       Console.WriteLine(item);
                     }
 
                 }
@@ -102,7 +104,7 @@ namespace SignGen.Library
                 {
                     Console.WriteLine(e);
                 }
-
+                Console.WriteLine(prev);
             });
 
 
