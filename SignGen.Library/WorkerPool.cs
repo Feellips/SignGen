@@ -12,6 +12,8 @@ namespace SignGen.Library
         private readonly IEnumerator<Worker<I, O>> producerEnum;
         private readonly IEnumerator<Worker<I, O>> consumerEnum;
 
+        private Exception ex;
+
         public WorkerPool(Func<I, O> handler, int threadCount)
         {
             if (threadCount < 1) throw new ArgumentException($"{nameof(threadCount)} can't be lower than 1.");
@@ -28,6 +30,8 @@ namespace SignGen.Library
 
         public void Enqueue(I data)
         {
+            if (ex != null) throw ex;
+
             var worker = GetNextWorker(producerEnum);
             worker.Enqueue(data);
         }
@@ -39,7 +43,11 @@ namespace SignGen.Library
             var worker = GetNextWorker(consumerEnum);
 
             try { result = worker.Dequeue(); }
-            catch (Exception) { throw; }
+            catch (Exception e)
+            {
+                ex = e;
+                throw e;
+            }
 
             return result;
         }
