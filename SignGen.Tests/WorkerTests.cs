@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Tracing;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -55,7 +56,7 @@ namespace SignGen.Tests
         [Fact]
         public void SignGeneratorOneThread()
         {
-            var worker = new Worker<byte[], string>(SignatureGenerator.GetHash);
+            var worker = new Worker<ByteBlock, string>(SignatureGenerator.GetHash);
             var consumerIsDone = false;
 
 
@@ -68,11 +69,13 @@ namespace SignGen.Tests
             var consumer = new Thread(() =>
             {
                 int size;
+                int counter = 0;
 
                 while ((size = GetBufferSize(input, blockSize)) > 0)
                 {
                     var dataBlock = GetDataBlock(input, size);
-                    worker.GiveData(dataBlock);
+                    var byteBlock = new ByteBlock(counter++, dataBlock);
+                    worker.Enqueue(byteBlock);
                 }
 
                 consumerIsDone = true;
@@ -90,7 +93,7 @@ namespace SignGen.Tests
 
                     try
                     {
-                        item = worker.RecieveResult();
+                        item = worker.Dequeue();
                     }
                     catch (Exception e)
                     {
@@ -135,22 +138,22 @@ namespace SignGen.Tests
         {
             var worker = new Worker<string, string>(emptyFunc);
 
-            worker.GiveData(str);
+            worker.Enqueue(str);
 
-            return str == worker.RecieveResult();
+            return str == worker.Dequeue();
         }
 
         private bool ReusabilityTest(string str, string str2)
         {
             var worker = new Worker<string, string>(emptyFunc);
 
-            worker.GiveData(str);
+            worker.Enqueue(str);
 
-            bool first = str == worker.RecieveResult();
+            bool first = str == worker.Dequeue();
 
-            worker.GiveData(str2);
+            worker.Enqueue(str2);
 
-            bool second = str2 == worker.RecieveResult() ;
+            bool second = str2 == worker.Dequeue() ;
 
             return first && second;
         }

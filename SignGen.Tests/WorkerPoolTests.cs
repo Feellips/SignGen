@@ -37,7 +37,7 @@ namespace SignGen.Tests
             {
                 foreach (var item in input)
                 {
-                    workerPool.EnqueueResource(item);
+                    workerPool.Enqueue(item);
                 }
             });
 
@@ -46,7 +46,7 @@ namespace SignGen.Tests
             {
                 foreach (var item in input)
                 {
-                    var consumed = workerPool.DequeueResult();
+                    var consumed = workerPool.Dequeue();
                     if (consumed != item) 
                         failed = true;
                 }
@@ -96,7 +96,7 @@ namespace SignGen.Tests
             return sBuilder.ToString();
         }
 
-        public void Start()
+        private void Start()
         {
             var pool = new WorkerPool<byte[], string>(GetHash, 8);
             var consumerIsDone = false;
@@ -114,7 +114,7 @@ namespace SignGen.Tests
                 while ((size = GetBufferSize(input, blockSize)) > 0)
                 {
                     var dataBlock = GetDataBlock(input, size);
-                    pool.EnqueueResource(dataBlock);
+                    pool.Enqueue(dataBlock);
                 }
 
                 consumerIsDone = true;
@@ -132,7 +132,7 @@ namespace SignGen.Tests
 
                     try
                     {
-                        item = pool.DequeueResult();
+                        item = pool.Dequeue();
                     }
                     catch (Exception e)
                     {

@@ -11,15 +11,15 @@ namespace SignGen
         {
             args.Rules().Validate(); // todo
 
-            var path = @"C:\ProgramData\Autodesk\Inventor 2021\Content Center\Libraries\AI2021_Inventor OTHER.idcl";
-            var blockSize = 4096;
+            var path = @"C:\ProgramData\Autodesk\Inventor 2021\Content Center\Libraries\AI2021_Inventor ANSI.idcl";
+            var blockSize = 16000;
 
             using var input = File.Open(path, FileMode.Open, FileAccess.Read);
-            using var sMem = new MemoryStream();
+            using var output = Console.OpenStandardOutput();
 
-            using var signGen = new SignatureGenerator(input, sMem, blockSize);
+            using var signGen = new SignatureGenerator(input, output, blockSize);
 
-            Stopwatch stopWatch = new Stopwatch();
+            var stopWatch = new Stopwatch();
 
             stopWatch.Start();
 

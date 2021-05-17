@@ -6,9 +6,8 @@ using System.Threading;
 
 namespace SignGen.Library
 {
-    public class Worker<I, O> : IDisposable where I : class where O : class
+    public class Worker<I, O> : IDisposable, IBlockingCollection<I, O> where I : class where O : class
     {
-
         #region Fields
 
         private readonly Func<I, O> handler;
@@ -54,15 +53,13 @@ namespace SignGen.Library
         private void Consume()
         {
             I input;
-            O result;
+            O result = null;
 
             while (true)
             {
                 lock (inLocker)
                 {
                     if (workToDo.Count == 0) Monitor.Wait(inLocker);
-
-                    if (isCompleted) return;
 
                     input = workToDo.Dequeue();
                 }
@@ -71,14 +68,19 @@ namespace SignGen.Library
                 {
                     try
                     {
-                        result = handler(input);
-                        doneWork.Enqueue(result);
+                        if (input != null)
+                            result = handler(input);
                     }
                     catch (Exception e)
                     {
                         ex = e;
-                        doneWork.Enqueue(null);
                     }
+                    finally
+                    {
+                        doneWork.Enqueue(result);
+                    }
+
+                    result = null;
 
                     Monitor.Pulse(outLocker);
                 }
@@ -87,52 +89,40 @@ namespace SignGen.Library
 
         }
 
-
-        public O RecieveResult()
-        {
-            O result;
-
-            lock (outLocker)
-            {
-                while (doneWork.Count == 0 && !isCompleted) Monitor.Wait(outLocker);
-
-                if (ex != null) throw ex;
-                
-                if (isCompleted) return null;
-
-                result = doneWork.Dequeue();
-
-
-                Monitor.Pulse(outLocker);
-                limiter.Release();
-            }
-
-            return result;
-        }
-
-        public void GiveData(I data)
+        public void Enqueue(I data)
         {
             limiter.Wait();
 
             lock (inLocker)
             {
-                if (isCompleted)
-                    throw new InvalidOperationException("Queue already stopped");
-
-
                 workToDo.Enqueue(data);
-
                 Monitor.Pulse(inLocker);
             }
         }
 
-        public void Stop()
+        public O Dequeue()
         {
-            lock (inLocker)
+            O result;
+
+            lock (outLocker)
             {
-                isCompleted = true;
-                Monitor.Pulse(inLocker);
+                while (doneWork.Count == 0) Monitor.Wait(outLocker);
+
+                if (ex != null) throw ex;
+
+                result = doneWork.Dequeue();
+
+                Monitor.Pulse(outLocker);
             }
+
+            limiter.Release();
+
+            return result;
+        }
+
+        public void CompleteAdding()
+        {
+            Enqueue(null);
         }
 
 
