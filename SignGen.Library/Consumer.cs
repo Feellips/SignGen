@@ -8,9 +8,10 @@ namespace SignGen.Library
 {
     internal class Consumer<I, O>
     {
-        private readonly Stream destination;
-        private readonly Func<O, byte[]> converter;
         private readonly IBlockingCollection<I, O> source;
+
+        private readonly Func<O, byte[]> converter;
+        private readonly Stream destination;
         private readonly Thread consumerThread;
 
         public Consumer(Func<O, byte[]> converter, IBlockingCollection<I, O> source, Stream destination)

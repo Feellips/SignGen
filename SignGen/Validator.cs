@@ -26,14 +26,14 @@ namespace SignGen
         public Validator IsSourceFileExist()
         {
             if (!File.Exists(args[0]))
-                throw new ArgumentException($"Error: Source file does not exist.");
+                throw new ArgumentException("Error: Source file does not exist.");
 
             return this;
         }
         public Validator IsPathCorrect(string path)
         {
             if (string.IsNullOrEmpty(path))
-                throw new ArgumentException($"Error: Path can not be empty.");
+                throw new ArgumentException("Error: Path can not be empty.");
 
             string file = Path.GetFileName(path);
             string dir = Path.GetDirectoryName(path);
@@ -52,7 +52,8 @@ namespace SignGen
             if (!int.TryParse(args[1], out int result))
                 throw new ArgumentException($"{args[1]} is not a number.");
 
-            if (result < 1) throw new ArgumentException($"Error: {args[1]} must be positive.");
+            if (result < 0) throw new ArgumentException("Error: block size must be positive.");
+            if (result == 0) throw new ArgumentException("Error: block size must be more than zero.");
 
             return this;
         }

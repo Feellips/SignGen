@@ -8,13 +8,13 @@ namespace SignGen.Library
 {
     internal class Producer<I, O>
     {
+        private readonly IBlockingCollection<I, O> destination;
+
         private readonly Func<int, byte[], I> factory;
         private readonly Stream source;
-        private readonly IBlockingCollection<I, O> destination;
         private readonly Thread producerThread;
 
         private readonly int blockSize;
-
 
         public Producer(Func<int, byte[], I> factory, Stream source, IBlockingCollection<I, O> destination, int blockSize)
         {
@@ -31,7 +31,6 @@ namespace SignGen.Library
                 while ((bufferSize = NextBufferSize(source)) > 0)
                 {
                     var dataBlock = GetDataBlock(bufferSize);
-
                     var byteBlock = ByteArrayToGenericInput(counter++, dataBlock);
 
                     destination.Enqueue(byteBlock);
@@ -55,13 +54,9 @@ namespace SignGen.Library
 
             return buffer;
         }
-
         public void Start() => producerThread.Start();
-
-        private I ByteArrayToGenericInput(int id, byte[] blockBytes)
-        {
-            return factory(id, blockBytes);
-        }
+        private I ByteArrayToGenericInput(int id, byte[] blockBytes) => factory(id, blockBytes);
+        
 
     }
 }

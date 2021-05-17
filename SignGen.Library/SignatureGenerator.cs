@@ -49,16 +49,20 @@ namespace SignGen.Library
 
         public void Start()
         {
-            using (var pool = new WorkerPool<ByteBlock, string>(GetHash, 8))
+            try
             {
-                var producer = new Producer<ByteBlock, string>(ByteBlock.GetByteBlock, input, pool, blockSize);
-                var consumer = new Consumer<ByteBlock, string>(ByteBlock.ByteBlockToByteArray, pool, output);
+                using (var pool = new WorkerPool<ByteBlock, string>(GetHash, 8))
+                {
+                    var producer = new Producer<ByteBlock, string>(ByteBlock.GetByteBlock, input, pool, blockSize);
+                    var consumer = new Consumer<ByteBlock, string>(ByteBlock.ByteBlockToByteArray, pool, output);
 
-                producer.Start();
-                consumer.Start();
+                    producer.Start();
+                    consumer.Start();
 
-                consumer.WaitCompletion();
+                    consumer.WaitCompletion();
+                }
             }
+            catch (Exception) { throw; }
         }
 
         protected virtual void Dispose(bool disposing)

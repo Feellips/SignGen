@@ -10,6 +10,8 @@ namespace SignGen
     {
         static void Main(string[] args)
         {
+            args = new string[2] { @"C:\ProgramData\Autodesk\Inventor 2021\Content Center\Libraries\AI2021_Inventor Parker.idcl", "2048"};
+
             try
             {
                 args.Rules().
@@ -22,6 +24,7 @@ namespace SignGen
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                return;
             }
 
             var path = args[0];
@@ -36,7 +39,14 @@ namespace SignGen
 
             stopWatch.Start();
 
-            signGen.Start();
+            try
+            {
+                signGen.Start();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
             
             Console.WriteLine(stopWatch.Elapsed);
 
