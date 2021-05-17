@@ -33,25 +33,10 @@ namespace SignGen.Library
 
         #endregion
 
-        private int GetBufferSize(Stream _fileStream)
-        {
-            return _fileStream.Length - _fileStream.Position < blockSize
-                ? (int)(_fileStream.Length - _fileStream.Position)
-                : blockSize;
-        }
-
-        private byte[] GetDataBlock(int size)
-        {
-            var buffer = new byte[size];
-            input.Read(buffer, 0, buffer.Length);
-
-            return buffer;
-        }
-
-        public static string GetHash(HashBlock byteBlock)
+        public static string GetHash(ByteBlock byteBlock)
         {
             var hashAlgorithm = SHA256.Create();
-            var data = hashAlgorithm.ComputeHash(byteBlock.ByteBlock);
+            var data = hashAlgorithm.ComputeHash(byteBlock.Block);
             var sBuilder = new StringBuilder();
 
             foreach (var item in data)
@@ -59,80 +44,22 @@ namespace SignGen.Library
                 sBuilder.Append(item.ToString("x2"));
             }
 
-            return $"{byteBlock.ID}. {sBuilder.ToString()}";
+            return $"{byteBlock.ID}. {sBuilder} \r\n";
         }
 
         public void Start()
         {
-            var pool = new Worker<HashBlock, string>(GetHash);
-
-            var consumer = new Thread(() =>
+            using (var pool = new WorkerPool<ByteBlock, string>(GetHash, 8))
             {
-                int size;
-                int counter = 0;
+                var producer = new Producer<ByteBlock, string>(ByteBlock.GetByteBlock, input, pool, blockSize);
+                var consumer = new Consumer<ByteBlock, string>(ByteBlock.ByteBlockToByteArray, pool, output);
 
-                while ((size = GetBufferSize(input)) > 0)
-                {
-                    var dataBlock = GetDataBlock(size);
+                producer.Start();
+                consumer.Start();
 
-                    var hashBlock = new HashBlock(counter++, dataBlock);
-
-                    pool.GiveData(hashBlock);
-                }
-
-                pool.Stop();
-
-            });
-
-
-            var producer = new Thread(() =>
-            {
-                string item;
-
-                try
-                {
-
-                    while ((item = pool.RecieveResult()) != null)
-                    {
-                        Console.WriteLine(item);
-                    }
-
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                }
-
-            });
-
-
-            consumer.Start();
-            producer.Start();
-
-            consumer.Join();
-            producer.Join();
-
-            pool.Dispose();
+                consumer.WaitCompletion();
+            }
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         protected virtual void Dispose(bool disposing)
         {
@@ -140,7 +67,7 @@ namespace SignGen.Library
             {
                 if (disposing)
                 {
-                    // TODO: освободить управляемое состояние (управляемые объекты)
+
                 }
 
                 // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить метод завершения
