@@ -6,9 +6,8 @@ using System.Threading;
 
 namespace SignGen.Library
 {
-    public class Worker<I, O> : IDisposable where I : class where O : class
+    public class Worker<I, O> : IBlockingCollection<I, O> where I : class where O : class
     {
-
         #region Fields
 
         private readonly Func<I, O> handler;
@@ -25,11 +24,7 @@ namespace SignGen.Library
         private volatile Exception ex;
         private bool disposedValue;
 
-        private bool isCompleted;
-
         public Exception Ex => ex;
-
-        public bool IsCompleted => isCompleted && doneWork.Count == 0 && workToDo.Count == 0;
 
         #endregion
 
@@ -54,7 +49,7 @@ namespace SignGen.Library
         private void Consume()
         {
             I input;
-            O result;
+            O result = null;
 
             while (true)
             {
@@ -62,84 +57,69 @@ namespace SignGen.Library
                 {
                     if (workToDo.Count == 0) Monitor.Wait(inLocker);
 
-                    if (isCompleted) return;
-                    
                     input = workToDo.Dequeue();
                 }
 
                 lock (outLocker)
                 {
-                   
-
                     try
                     {
                         if (input != null)
-                        {
                             result = handler(input);
-                        }
-                        else
-                        {
-                            result = null;
-                        }
-
-                        doneWork.Enqueue(result);
                     }
                     catch (Exception e)
                     {
                         ex = e;
-                        doneWork.Enqueue(null);
+                    }
+                    finally
+                    {
+                        doneWork.Enqueue(result);
                     }
 
                     Monitor.Pulse(outLocker);
                 }
 
+                if (result == null) return;
+
+                result = null;
             }
 
         }
 
+        public void Enqueue(I data)
+        {
+            limiter.Wait();
 
-        public O RecieveResult()
+            lock (inLocker)
+            {
+                workToDo.Enqueue(data);
+                Monitor.Pulse(inLocker);
+            }
+        }
+
+        public O Dequeue()
         {
             O result;
 
             lock (outLocker)
             {
-                while (doneWork.Count == 0 && !isCompleted) Monitor.Wait(outLocker);
+                while (doneWork.Count == 0) Monitor.Wait(outLocker);
 
                 if (ex != null) throw ex;
 
                 result = doneWork.Dequeue();
 
                 Monitor.Pulse(outLocker);
-               // limiter.Release();
             }
+
+            limiter.Release();
 
             return result;
         }
 
-        public void GiveData(I data)
+        public void CompleteAdding()
         {
-          //  limiter.Wait();
-
-            lock (inLocker)
-            {
-                if (isCompleted)
-                    throw new InvalidOperationException("Queue already stopped");
-
-
-                workToDo.Enqueue(data);
-
-                Monitor.Pulse(inLocker);
-            }
-        }
-
-        public void Stop()
-        {
-            lock (inLocker)
-            {
-                isCompleted = true;
-                Monitor.Pulse(inLocker);
-            }
+            Enqueue(null);
         }
 
 
@@ -149,9 +129,11 @@ namespace SignGen.Library
             {
                 if (disposing)
                 {
-                    Stop();
-                    workerThread.Join();
-                    limiter.Dispose();
+                    if (workerThread.IsAlive)
+                    {
+                        CompleteAdding();
+                        workerThread.Join();
+                    }
                 }
 
                 disposedValue = true;

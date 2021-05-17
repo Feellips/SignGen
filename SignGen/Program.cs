@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using SignGen.Library;
 
 namespace SignGen
@@ -9,17 +10,29 @@ namespace SignGen
     {
         static void Main(string[] args)
         {
-            args.Rules().Validate(); // todo
+            try
+            {
+                args.Rules().
+                    IsNotNull().
+                    IsEnoughArgs(2).
+                    IsPathCorrect(args[0]).
+                    IsSourceFileExist().
+                    IsBlockSizeValid();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
 
-            var path = @"C:\ProgramData\Autodesk\Inventor 2021\Content Center\Libraries\AI2021_Inventor OTHER.idcl";
-            var blockSize = 4096;
+            var path = args[0];
+            var blockSize = int.Parse(args[1]);
 
             using var input = File.Open(path, FileMode.Open, FileAccess.Read);
-            using var sMem = new MemoryStream();
+            using var output = Console.OpenStandardOutput();
 
-            using var signGen = new SignatureGenerator(input, sMem, blockSize);
+            using var signGen = new SignatureGenerator(input, output, blockSize);
 
-            Stopwatch stopWatch = new Stopwatch();
+            var stopWatch = new Stopwatch();
 
             stopWatch.Start();
 
