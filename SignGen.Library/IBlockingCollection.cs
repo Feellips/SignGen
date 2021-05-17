@@ -4,7 +4,7 @@ using System.Text;
 
 namespace SignGen.Library
 {
-    public interface IBlockingCollection<I, out O>
+    public interface IBlockingCollection<I, O> : IDisposable
     {
         void Enqueue(I item);
         O Dequeue();

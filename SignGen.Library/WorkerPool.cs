@@ -57,7 +57,7 @@ namespace SignGen.Library
 
         public void CompleteAdding()
         {
-            var worker = GetNextWorker(consumerEnum);
+            var worker = GetNextWorker(producerEnum);
             worker.CompleteAdding();
         }
 

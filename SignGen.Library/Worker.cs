@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace SignGen.Library
 {
-    public class Worker<I, O> : IDisposable, IBlockingCollection<I, O> where I : class where O : class
+    public class Worker<I, O> : IBlockingCollection<I, O> where I : class where O : class
     {
         #region Fields
 
@@ -24,11 +24,7 @@ namespace SignGen.Library
         private volatile Exception ex;
         private bool disposedValue;
 
-        private bool isCompleted;
-
         public Exception Ex => ex;
-
-        public bool IsCompleted => isCompleted && doneWork.Count == 0 && workToDo.Count == 0;
 
         #endregion
 
@@ -80,11 +76,12 @@ namespace SignGen.Library
                         doneWork.Enqueue(result);
                     }
 
-                    result = null;
-
                     Monitor.Pulse(outLocker);
                 }
 
+                if (result == null) return;
+
+                result = null;
             }
 
         }
@@ -132,6 +129,11 @@ namespace SignGen.Library
             {
                 if (disposing)
                 {
+                    if (workerThread.IsAlive)
+                    {
+                        CompleteAdding();
+                        workerThread.Join();
+                    }
                 }
 
                 disposedValue = true;

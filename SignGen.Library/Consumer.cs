@@ -22,7 +22,7 @@ namespace SignGen.Library
             consumerThread = new Thread(() =>
             {
                 O item;
-                int counter = 0;
+
                 try
                 {
                     while (true)
@@ -41,6 +41,10 @@ namespace SignGen.Library
                 catch (Exception e)
                 {
                     Console.WriteLine(e);
+                }
+                finally
+                {
+                    source.Dispose();
                 }
 
             });
