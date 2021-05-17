@@ -42,11 +42,6 @@ namespace SignGen.Library
                 {
                     Console.WriteLine(e);
                 }
-                finally
-                {
-                    source.Dispose();
-                }
-
             });
         }
 

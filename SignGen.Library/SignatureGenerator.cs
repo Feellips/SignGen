@@ -49,35 +49,17 @@ namespace SignGen.Library
 
         public void Start()
         {
-            var pool = new WorkerPool<ByteBlock, string>(GetHash, 8);
+            using (var pool = new WorkerPool<ByteBlock, string>(GetHash, 8))
+            {
+                var producer = new Producer<ByteBlock, string>(ByteBlock.GetByteBlock, input, pool, blockSize);
+                var consumer = new Consumer<ByteBlock, string>(ByteBlock.ByteBlockToByteArray, pool, output);
 
-            var producer = new Producer<ByteBlock, string>(ByteBlock.GetByteBlock, input, pool, blockSize);
-            var consumer = new Consumer<ByteBlock, string>(ByteBlock.ByteBlockToByteArray, pool, output);
+                producer.Start();
+                consumer.Start();
 
-            producer.Start();
-            consumer.Start();
-
-            consumer.WaitCompletion();
+                consumer.WaitCompletion();
+            }
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         protected virtual void Dispose(bool disposing)
         {
@@ -85,7 +67,7 @@ namespace SignGen.Library
             {
                 if (disposing)
                 {
-                    // TODO: освободить управляемое состояние (управляемые объекты)
+
                 }
 
                 // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить метод завершения
