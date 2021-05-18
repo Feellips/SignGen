@@ -2,15 +2,16 @@
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using SignGen.Exstensions;
 using SignGen.Library;
 
 namespace SignGen
 {
     class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
-            args = new string[2] { @"C:\Program Files\Pixologic\ZBrush 2019\ZProjects\character.ZPR", "4096"};
+            args = new string[2] { @"C:\Program Files\Pixologic\ZBrush 2019\ZProjects\character.ZPR", "4096" };
 
             try
             {
@@ -29,27 +30,20 @@ namespace SignGen
 
             var path = args[0];
             var blockSize = int.Parse(args[1]);
+            var threadCount = Environment.ProcessorCount;
 
-            using var input = File.Open(path, FileMode.Open, FileAccess.Read);
-            using var output = Console.OpenStandardOutput();
-
-            using var signGen = new SignatureGenerator(input, output, blockSize);
-
-            var stopWatch = new Stopwatch();
-
-            stopWatch.Start();
+            var input = File.Open(path, FileMode.Open, FileAccess.Read);
+            var output = Console.OpenStandardOutput();
 
             try
             {
-                signGen.Start();
+                using var signGen = new SignatureGenerator(input, output, blockSize);
+                signGen.Start(threadCount);
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
             }
-            
-            Console.WriteLine(stopWatch.Elapsed);
-
         }
     }
 }

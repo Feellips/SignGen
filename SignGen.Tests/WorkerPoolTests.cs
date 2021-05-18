@@ -1,5 +1,8 @@
+using System;
+using System.IO;
 using SignGen.Library;
 using System.Threading;
+using SignGen.Library.ThreadAgents;
 using Xunit;
 
 namespace SignGen.Tests
@@ -47,19 +50,58 @@ namespace SignGen.Tests
         [Fact]
         private void WorkerPool_ValidValuesAndHashFunc_Time()
         {
-            Assert.True(false);
+        
+
+           
         }
 
         [Fact]
         private void WorkerPool_ValidValuesAndInvalidFunc_ExceptionThrown()
         {
-            Assert.True(false);
-        }
+            var inOrder = true;
 
-        [Fact]
-        private void WorkerPool_InvalidOutputValueAndEmptyFunc_ExceptionThrown()
-        {
-            Assert.True(false);
+            var worker = new WorkerPool<string, string>((str) => throw new Exception(), 8);
+            Exception ex = null;
+
+            var prod = new Thread(() =>
+            {
+                try
+                {
+                    for (int i = 0; i < 999_999; i++)
+                    {
+                        worker.Enqueue(i.ToString());
+                    }
+                    worker.CompleteAdding();
+                }
+                catch (Exception e)
+                {
+                    // ignored
+                }
+            });
+
+            var cons = new Thread(() =>
+            {
+                string item = null;
+
+                for (int i = 0; i < 999_999; i++)
+                {
+                    try
+                    {
+                        item = worker.Dequeue();
+                    }
+                    catch (Exception e) { ex = e; }
+
+                    if (item == null) return;
+                }
+            });
+
+            prod.Start();
+            cons.Start();
+
+            prod.Join();
+            cons.Join();
+
+            Assert.True(ex != null);
         }
     }
 }

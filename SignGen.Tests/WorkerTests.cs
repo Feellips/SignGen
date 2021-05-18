@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using SignGen.Library;
+using SignGen.Library.ThreadAgents;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -50,34 +51,30 @@ namespace SignGen.Tests
         }
 
         [Fact]
-        private void Worker_ValidValuesAndHashFunc_Time()
-        {
-            Assert.True(false);
-        }
-
-        [Fact]
         private void Worker_ValidValuesAndInvalidFunc_ExceptionThrown()
         {
-            var isInOrder = true;
+            var inOrder = true;
 
-            var workerPool = new Worker<string, string>((str) => throw new Exception());
+            var worker = new Worker<string, string>((str) => throw new Exception());
             Exception ex = null;
 
-            var prod = new Thread((ex) =>
+            var prod = new Thread(() =>
             {
                 try
                 {
                     for (int i = 0; i < 999_999; i++)
                     {
-                        workerPool.Enqueue(i.ToString());
+                        worker.Enqueue(i.ToString());
                     }
+                    worker.CompleteAdding();
                 }
-                catch(Exception e) { ex = e; }
-                finally { workerPool.CompleteAdding(); }
-
+                catch (Exception e)
+                {
+                    // ignored
+                }
             });
 
-            var cons = new Thread((ex) =>
+            var cons = new Thread(() =>
             {
                 string item = null;
 
@@ -85,14 +82,11 @@ namespace SignGen.Tests
                 {
                     try
                     {
-                        item = workerPool.Dequeue();
+                        item = worker.Dequeue();
                     }
                     catch (Exception e) { ex = e; }
 
                     if (item == null) return;
-
-                    if (item != i.ToString())
-                        isInOrder = false;
                 }
             });
 

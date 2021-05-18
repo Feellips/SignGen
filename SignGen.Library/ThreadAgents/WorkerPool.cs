@@ -1,19 +1,22 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Threading;
 
-namespace SignGen.Library
+namespace SignGen.Library.ThreadAgents
 {
-    public class WorkerPool<I, O> : IDisposable, IBlockingCollection<I, O> where I : class where O : class
+    public class WorkerPool<I, O> : IBlockingQueueWorker<I, O> where I : class where O : class
     {
+        #region Fields
+
         private readonly List<Worker<I, O>> workers;
 
         private readonly IEnumerator<Worker<I, O>> producerEnum;
         private readonly IEnumerator<Worker<I, O>> consumerEnum;
 
-        private Exception ex;
+        private bool isDisposed;
 
+        #endregion
+
+        #region Constructor
         public WorkerPool(Func<I, O> handler, int threadCount)
         {
             if (threadCount < 1) throw new ArgumentException($"{nameof(threadCount)} can't be lower than 1.");
@@ -27,31 +30,42 @@ namespace SignGen.Library
             consumerEnum = workers.GetEnumerator();
         }
 
+        #endregion
 
         public void Enqueue(I data)
         {
-            if (ex != null) throw ex;
+            CheckDisposed();
 
             var worker = GetNextWorker(producerEnum);
-            worker.Enqueue(data);
-        }
 
+            try
+            {
+                worker.Enqueue(data);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
         public O Dequeue()
         {
+            CheckDisposed();
+
             O result;
 
             var worker = GetNextWorker(consumerEnum);
 
-            try { result = worker.Dequeue(); }
-            catch (Exception e)
+            try
             {
-                ex = e;
-                throw e;
+                result = worker.Dequeue();
+            }
+            catch (Exception)
+            {
+                throw;
             }
 
             return result;
         }
-
         private Worker<I, O> GetNextWorker(IEnumerator<Worker<I, O>> workerEnumerator)
         {
             if (!workerEnumerator.MoveNext())
@@ -62,29 +76,47 @@ namespace SignGen.Library
 
             return workerEnumerator.Current;
         }
-
         public void CompleteAdding()
         {
+            CheckDisposed();
+
             var worker = GetNextWorker(producerEnum);
             worker.CompleteAdding();
         }
 
-
+        #region Dispose
         protected virtual void Dispose(bool disposing)
         {
-            if (disposing)
+            if (!isDisposed)
             {
-                foreach (var item in workers)
+                if (disposing)
                 {
-                    item.Dispose();
+                    foreach (var item in workers)
+                    {
+                        item.Dispose();
+                    }
+
+                    producerEnum.Dispose();
+                    consumerEnum.Dispose();
                 }
+
+                isDisposed = true;
             }
         }
-
         public void Dispose()
         {
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
+        private void CheckDisposed()
+        {
+            if (isDisposed)
+            {
+                throw new ObjectDisposedException(GetType().Name);
+            }
+        }
+
+        #endregion
+
     }
 }

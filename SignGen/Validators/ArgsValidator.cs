@@ -1,36 +1,36 @@
 ﻿using System;
 using System.IO;
 
-namespace SignGen
+namespace SignGen.Validators
 {
-    public class Validator
+    public class ArgsValidator
     {
         private string[] args;
 
-        public Validator(string[] args) => this.args = args;
+        public ArgsValidator(string[] args) => this.args = args;
 
-        public Validator IsNotNull()
+        public ArgsValidator IsNotNull()
         {
             if (args == null)
                 throw new ArgumentNullException("Error: No arguments were found.");
 
             return this;
         }
-        public Validator IsEnoughArgs(int num)
+        public ArgsValidator IsEnoughArgs(int num)
         {
             if (args.Length != num)
                 throw new ArgumentException($"Error: Wrong number of arguments. Supposed to be {num}");
 
             return this;
         }
-        public Validator IsSourceFileExist()
+        public ArgsValidator IsSourceFileExist()
         {
             if (!File.Exists(args[0]))
                 throw new ArgumentException("Error: Source file does not exist.");
 
             return this;
         }
-        public Validator IsPathCorrect(string path)
+        public ArgsValidator IsPathCorrect(string path)
         {
             if (string.IsNullOrEmpty(path))
                 throw new ArgumentException("Error: Path can not be empty.");
@@ -47,7 +47,7 @@ namespace SignGen
             return this;
         }
 
-        public Validator IsBlockSizeValid()
+        public ArgsValidator IsBlockSizeValid()
         {
             if (!int.TryParse(args[1], out int result))
                 throw new ArgumentException($"{args[1]} is not a number.");

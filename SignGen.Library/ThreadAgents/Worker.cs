@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
+using SignGen.Library.BlockingCollections;
+using SignGen.Library.ThreadAgents.Exceptions;
 
-namespace SignGen.Library
+namespace SignGen.Library.ThreadAgents
 {
-    public class Worker<I, O> : IBlockingCollection<I, O> where I : class where O : class
+    public class Worker<I, O> : IBlockingQueueWorker<I, O> where I : class where O : class
     {
         #region Fields
 
@@ -21,10 +20,8 @@ namespace SignGen.Library
 
         private readonly SemaphoreSlim limiter;
 
-        private volatile Exception ex;
-        private bool disposedValue;
-
-        public Exception Ex => ex;
+        private volatile Exception exception;
+        private bool isDisposed;
 
         #endregion
 
@@ -46,6 +43,43 @@ namespace SignGen.Library
 
         #endregion
 
+        public void Enqueue(I data)
+        {
+            CheckDisposed();
+
+            if (!workerThread.IsAlive) throw new WorkerStoppedException();
+
+            limiter.Wait();
+
+            lock (inLocker)
+            {
+                workToDo.Enqueue(data);
+                Monitor.Pulse(inLocker);
+            }
+        }
+        public O Dequeue()
+        {
+            O result;
+
+            lock (outLocker)
+            {
+                while (doneWork.Count == 0) Monitor.Wait(outLocker);
+
+                result = doneWork.Dequeue();
+
+                Monitor.Pulse(outLocker);
+            }
+
+            limiter.Release();
+
+            if (exception != null) throw exception;
+
+            return result;
+        }
+        public void CompleteAdding()
+        {
+            Enqueue(null);
+        }
         private void Consume()
         {
             I input;
@@ -69,7 +103,7 @@ namespace SignGen.Library
                     }
                     catch (Exception e)
                     {
-                        ex = e;
+                        exception = e;
                     }
                     finally
                     {
@@ -86,46 +120,11 @@ namespace SignGen.Library
 
         }
 
-        public void Enqueue(I data)
-        {
-            limiter.Wait();
-
-            lock (inLocker)
-            {
-                workToDo.Enqueue(data);
-                Monitor.Pulse(inLocker);
-            }
-        }
-
-        public O Dequeue()
-        {
-            O result;
-
-            lock (outLocker)
-            {
-                while (doneWork.Count == 0) Monitor.Wait(outLocker);
-
-                if (ex != null) throw ex;
-
-                result = doneWork.Dequeue();
-
-                Monitor.Pulse(outLocker);
-            }
-
-            limiter.Release();
-
-            return result;
-        }
-
-        public void CompleteAdding()
-        {
-            Enqueue(null);
-        }
-
+        #region Dispose
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!isDisposed)
             {
                 if (disposing)
                 {
@@ -134,19 +133,28 @@ namespace SignGen.Library
                         CompleteAdding();
                         workerThread.Join();
                     }
+                    limiter.Dispose();
                 }
 
-                disposedValue = true;
+                isDisposed = true;
             }
         }
-
         public void Dispose()
         {
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
+        private void CheckDisposed()
+        {
+            if (isDisposed)
+            {
+                throw new ObjectDisposedException(GetType().Name);
+            }
+        }
 
+        #endregion
 
+       
 
     }
 }

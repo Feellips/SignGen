@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Text;
 
-namespace SignGen.Library
+namespace SignGen.Library.ProducerConsumer
 {
     public class ByteBlock
     {
@@ -16,9 +14,7 @@ namespace SignGen.Library
         }
         public static ByteBlock GetByteBlock(int id, byte[] block) => new ByteBlock(id, block);
 
-        public static byte[] ByteBlockToByteArray(string byteBlock)
-        {
-            return Encoding.ASCII.GetBytes(byteBlock);
-        } 
+        public static byte[] ToByteArray(string byteBlock) => Encoding.ASCII.GetBytes(byteBlock);
+         
     }
 }
