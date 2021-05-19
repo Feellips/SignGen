@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Diagnostics.Tracing;
-using System.IO;
-using System.Runtime.CompilerServices;
 using System.Threading;
-using SignGen.Library;
 using SignGen.Library.ThreadAgents;
-using SignGen.Library.ThreadAgents.Exceptions;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace SignGen.Tests
 {

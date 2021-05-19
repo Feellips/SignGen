@@ -1,6 +1,4 @@
 using System;
-using System.IO;
-using SignGen.Library;
 using System.Threading;
 using SignGen.Library.ThreadAgents;
 using Xunit;
