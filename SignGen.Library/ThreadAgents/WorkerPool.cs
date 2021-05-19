@@ -85,6 +85,7 @@ namespace SignGen.Library.ThreadAgents
         }
 
         #region Dispose
+
         protected virtual void Dispose(bool disposing)
         {
             if (!isDisposed)

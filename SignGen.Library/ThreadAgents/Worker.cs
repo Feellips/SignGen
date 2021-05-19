@@ -21,7 +21,9 @@ namespace SignGen.Library.ThreadAgents
         private readonly SemaphoreSlim limiter;
 
         private volatile Exception exception;
+
         private bool isDisposed;
+        private bool isCompleted;
 
         #endregion
 
@@ -47,10 +49,14 @@ namespace SignGen.Library.ThreadAgents
         {
             CheckDisposed();
 
-            if (!workerThread.IsAlive) throw new WorkerStoppedException();
-
             limiter.Wait();
 
+            if (!workerThread.IsAlive || isCompleted) throw new WorkerStoppedException();
+
+            EnqueueDirectly(data);
+        }
+        private void EnqueueDirectly(I data)
+        {
             lock (inLocker)
             {
                 workToDo.Enqueue(data);
@@ -78,7 +84,9 @@ namespace SignGen.Library.ThreadAgents
         }
         public void CompleteAdding()
         {
-            Enqueue(null);
+            EnqueueDirectly(null);
+            limiter.Release();
+            isCompleted = true;
         }
         private void Consume()
         {
@@ -153,8 +161,6 @@ namespace SignGen.Library.ThreadAgents
         }
 
         #endregion
-
-       
 
     }
 }

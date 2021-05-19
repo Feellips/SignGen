@@ -28,7 +28,11 @@ namespace SignGen.Library.ProducerConsumer
                     stream.Write(byteBlock, 0, byteBlock.Length);
                 }
             }
-            catch (Exception e) { exception = e; }
+            catch (Exception e)
+            {
+                exception = e;
+                collection.Dispose();
+            }
         }
 
         public byte[] GenericOutputToByteArray(O output) => converter(output);

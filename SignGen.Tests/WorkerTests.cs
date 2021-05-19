@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using SignGen.Library;
 using SignGen.Library.ThreadAgents;
+using SignGen.Library.ThreadAgents.Exceptions;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -15,47 +16,20 @@ namespace SignGen.Tests
         [Fact]
         private void Worker_ValidValuesAndEmptyFunc_IdenticalValues()
         {
-            var isInOrder = true;
-
-            var workerPool = new Worker<string, string>((str) => str);
-
-            var prod = new Thread(() =>
-            {
-                for (int i = 0; i < 999_999; i++)
-                {
-                    workerPool.Enqueue(i.ToString());
-                }
-                workerPool.CompleteAdding();
-            });
-
-            var cons = new Thread(() =>
-            {
-                for (int i = 0; i < 999_999; i++)
-                {
-                    var item = workerPool.Dequeue();
-
-                    if (item == null) return;
-
-                    if (item != i.ToString())
-                        isInOrder = false;
-                }
-            });
-
-            prod.Start();
-            cons.Start();
-
-            prod.Join();
-            cons.Join();
-
-            Assert.True(isInOrder);
+            Assert.True(RunWorker((str)=>str));
         }
 
         [Fact]
         private void Worker_ValidValuesAndInvalidFunc_ExceptionThrown()
         {
+            Assert.Throws<Exception>(() => RunWorker((str) => throw new Exception("test")));
+        }
+
+        private bool RunWorker(Func<string, string> func)
+        {
             var inOrder = true;
 
-            var worker = new Worker<string, string>((str) => throw new Exception());
+            var worker = new WorkerPool<string, string>(func, 8);
             Exception ex = null;
 
             var prod = new Thread(() =>
@@ -96,8 +70,9 @@ namespace SignGen.Tests
             prod.Join();
             cons.Join();
 
-            Assert.True(ex != null);
+            if (ex != null) throw ex;
 
+            return inOrder;
         }
     }
 }

@@ -73,5 +73,12 @@ namespace SignGen.Library.BlockingCollections
 
         #endregion
 
+        public void Clear()
+        {
+            lock (locker)
+            {
+                queue.Clear();
+            }
+        }
     }
 }

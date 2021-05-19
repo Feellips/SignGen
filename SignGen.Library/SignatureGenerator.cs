@@ -35,7 +35,7 @@ namespace SignGen.Library
 
         #endregion
 
-        public string GetHash(ByteBlock byteBlock)
+        public string GetHashBlock(ByteBlock byteBlock)
         {
             var hashAlgorithm = SHA256.Create();
             var data = hashAlgorithm.ComputeHash(byteBlock.Block);
@@ -53,7 +53,7 @@ namespace SignGen.Library
         {
             try
             {
-                using (var pool = new WorkerPool<ByteBlock, string>(GetHash, threads))
+                using (var pool = new WorkerPool<ByteBlock, string>(GetHashBlock, threads))
                 {
                     var producer = new Producer<ByteBlock, string>(ByteBlock.GetByteBlock, input, pool, blockSize);
                     var consumer = new Consumer<ByteBlock, string>(ByteBlock.ToByteArray, pool, output);

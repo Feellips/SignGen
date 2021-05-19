@@ -33,10 +33,10 @@ namespace SignGen.Library.ProducerConsumer
 
                     collection.Enqueue(byteBlock);
                 }
+                collection.CompleteAdding();
             }
             catch (Exception e) { exception = e; }
 
-            collection.CompleteAdding();
         }
         private int NextBufferSize()
         {

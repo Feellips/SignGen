@@ -23,37 +23,20 @@ namespace SignGen.Validators
 
             return this;
         }
-        public ArgsValidator IsSourceFileExist()
+        public ArgsValidator IsSourceFileExist(int argPosition)
         {
-            if (!File.Exists(args[0]))
+            if (!File.Exists(args[argPosition]))
                 throw new ArgumentException("Error: Source file does not exist.");
 
             return this;
         }
-        public ArgsValidator IsPathCorrect(string path)
+
+        public ArgsValidator IsBlockSizeValid(int argPosition)
         {
-            if (string.IsNullOrEmpty(path))
-                throw new ArgumentException("Error: Path can not be empty.");
+            if (!int.TryParse(args[argPosition], out int result))
+                throw new ArgumentException($"{args[argPosition]} is not a number.");
 
-            string file = Path.GetFileName(path);
-            string dir = Path.GetDirectoryName(path);
-
-            bool fileInvalid = file.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0;
-            bool dirInvalid = dir.IndexOfAny(Path.GetInvalidPathChars()) >= 0;
-
-            if (fileInvalid || dirInvalid)
-                throw new ArgumentException($"Error: {path} does not valid.");
-
-            return this;
-        }
-
-        public ArgsValidator IsBlockSizeValid()
-        {
-            if (!int.TryParse(args[1], out int result))
-                throw new ArgumentException($"{args[1]} is not a number.");
-
-            if (result < 0) throw new ArgumentException("Error: block size must be positive.");
-            if (result == 0) throw new ArgumentException("Error: block size must be more than zero.");
+            if (result <= 0) throw new ArgumentException("Error: block size must be positive and more than zero.");
 
             return this;
         }

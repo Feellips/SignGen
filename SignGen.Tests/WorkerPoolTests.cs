@@ -12,55 +12,20 @@ namespace SignGen.Tests
         [Fact]
         private void WorkerPool_ValidValuesAndEmptyFunc_IdenticalValuesInOrder()
         {
-            var isInOrder = true;
-
-            var workerPool = new WorkerPool<string, string>((str) => str, 16);
-
-            var prod = new Thread(() =>
-            {
-                for (int i = 0; i < 999_999; i++)
-                {
-                    workerPool.Enqueue(i.ToString());
-                }
-                workerPool.CompleteAdding();
-            });
-
-            var cons = new Thread(() =>
-            {
-                for (int i = 0; i < 999_999; i++)
-                {
-                    var item = workerPool.Dequeue();
-
-                    if (item == null) return;
-
-                    if (item != i.ToString())
-                        isInOrder = false;
-                }
-            });
-
-            prod.Start();
-            cons.Start();
-
-            prod.Join();
-            cons.Join();
-
-            Assert.True(isInOrder);
-        }
-
-        [Fact]
-        private void WorkerPool_ValidValuesAndHashFunc_Time()
-        {
-        
-
-           
+            Assert.True(RunWorkerPool((str)=>str));
         }
 
         [Fact]
         private void WorkerPool_ValidValuesAndInvalidFunc_ExceptionThrown()
         {
+            Assert.Throws<Exception>(() => RunWorkerPool((str) => throw new Exception("test")));
+        }
+
+        private bool RunWorkerPool(Func<string, string> func)
+        {
             var inOrder = true;
 
-            var worker = new WorkerPool<string, string>((str) => throw new Exception(), 8);
+            var worker = new WorkerPool<string, string>(func, 8);
             Exception ex = null;
 
             var prod = new Thread(() =>
@@ -101,7 +66,9 @@ namespace SignGen.Tests
             prod.Join();
             cons.Join();
 
-            Assert.True(ex != null);
+            if (ex != null) throw ex;
+
+            return inOrder;
         }
     }
 }
