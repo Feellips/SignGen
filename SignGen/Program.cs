@@ -1,12 +1,30 @@
 ﻿using System;
+using SignGen.Exstensions;
 
 namespace SignGen
 {
-    class Program
+    public class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            try
+            {
+                args.Rules().
+                    IsNotNull().
+                    IsEnoughArgs(2).
+                    IsSourceFileExist(0).
+                    IsBlockSizeValid(1);
+
+                var path = args[0];
+                var blockSize = int.Parse(args[1]);
+
+                var fileSignature = new FileSignature(path);
+                fileSignature.WriteFileSignatureInConsole(blockSize);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
     }
 }

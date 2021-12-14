@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30907.101
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SignGen", "SignGen\SignGen.csproj", "{CCE8D148-128B-4617-AB04-C2528A907B73}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignGen", "SignGen\SignGen.csproj", "{CCE8D148-128B-4617-AB04-C2528A907B73}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SignGen.Tests", "SignGen.Tests\SignGen.Tests.csproj", "{80E62ED1-9143-4E1D-8F19-2CE600B402BF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignGen.Tests", "SignGen.Tests\SignGen.Tests.csproj", "{80E62ED1-9143-4E1D-8F19-2CE600B402BF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SignGen.Library", "SignGen.Library\SignGen.Library.csproj", "{29BCB8F0-53AB-4B3F-8387-68549253135A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignGen.Library", "SignGen.Library\SignGen.Library.csproj", "{60B3338B-871C-4824-B0BB-F7C20C6494B3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,10 @@ Global
 		{80E62ED1-9143-4E1D-8F19-2CE600B402BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{80E62ED1-9143-4E1D-8F19-2CE600B402BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{80E62ED1-9143-4E1D-8F19-2CE600B402BF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{29BCB8F0-53AB-4B3F-8387-68549253135A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{29BCB8F0-53AB-4B3F-8387-68549253135A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{29BCB8F0-53AB-4B3F-8387-68549253135A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{29BCB8F0-53AB-4B3F-8387-68549253135A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{60B3338B-871C-4824-B0BB-F7C20C6494B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60B3338B-871C-4824-B0BB-F7C20C6494B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{60B3338B-871C-4824-B0BB-F7C20C6494B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60B3338B-871C-4824-B0BB-F7C20C6494B3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
