@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading;
+using SignGen.Library.ProducerConsumer;
+using SignGen.Library.ThreadAgents;
 
 namespace SignGen.Library
 {
@@ -12,28 +11,31 @@ namespace SignGen.Library
     {
         #region Fields
 
-        private readonly Stream input;
-        private readonly Stream output;
+        private readonly Stream _input;
+        private readonly Stream _output;
 
-        private readonly string path;
-        private readonly int blockSize;
+        private readonly int _blockSize;
 
-        private bool disposedValue;
+        private bool _disposedValue;
 
         #endregion
 
         #region Constructor
-        public SignatureGenerator(Stream input, Stream output) : this(input, output, 4096) { }
+
+        public SignatureGenerator(Stream input, Stream output) : this(input, output, 4096)
+        {
+        }
+
         public SignatureGenerator(Stream input, Stream output, int blockSize)
         {
-            this.input = input;
-            this.output = output;
-            this.blockSize = blockSize;
+            _input = input;
+            _output = output;
+            _blockSize = blockSize;
         }
 
         #endregion
 
-        public static string GetHash(ByteBlock byteBlock)
+        private string GetHashBlock(ByteBlock byteBlock)
         {
             var hashAlgorithm = SHA256.Create();
             var data = hashAlgorithm.ComputeHash(byteBlock.Block);
@@ -47,45 +49,37 @@ namespace SignGen.Library
             return $"{byteBlock.ID}. {sBuilder} \r\n";
         }
 
-        public void Start()
+        public void Start(int threads)
         {
-            using (var pool = new WorkerPool<ByteBlock, string>(GetHash, 8))
+            using (var pool = new WorkerPool<ByteBlock, string>(GetHashBlock, threads))
             {
-                var producer = new Producer<ByteBlock, string>(ByteBlock.GetByteBlock, input, pool, blockSize);
-                var consumer = new Consumer<ByteBlock, string>(ByteBlock.ByteBlockToByteArray, pool, output);
+                var producer = new Producer<ByteBlock, string>(ByteBlock.GetByteBlock, _input, pool, _blockSize);
+                var consumer = new Consumer<ByteBlock, string>(ByteBlock.ToByteArray, pool, _output);
 
                 producer.Start();
                 consumer.Start();
 
+                producer.WaitCompletion();
                 consumer.WaitCompletion();
             }
         }
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!_disposedValue)
             {
                 if (disposing)
                 {
-
+                    _input.Dispose();
+                    _output.Dispose();
                 }
 
-                // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить метод завершения
-                // TODO: установить значение NULL для больших полей
-                disposedValue = true;
+                _disposedValue = true;
             }
         }
 
-        // // TODO: переопределить метод завершения, только если "Dispose(bool disposing)" содержит код для освобождения неуправляемых ресурсов
-        // ~MultithreadedSignatureGenerator()
-        // {
-        //     // Не изменяйте этот код. Разместите код очистки в методе "Dispose(bool disposing)".
-        //     Dispose(disposing: false);
-        // }
-
         public void Dispose()
         {
-            // Не изменяйте этот код. Разместите код очистки в методе "Dispose(bool disposing)".
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }

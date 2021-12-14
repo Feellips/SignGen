@@ -1,38 +1,72 @@
 ﻿using System;
-using System.Diagnostics.Tracing;
-using System.IO;
-using System.Runtime.CompilerServices;
 using System.Threading;
-using SignGen.Library;
+using SignGen.Library.ThreadAgents;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace SignGen.Tests
 {
     public class WorkerTests
     {
         [Fact]
-        private void Worker_ValidValuesAndEmptyFunc_IdenticalValuesInOrder()
+        private void Worker_ValidValuesAndEmptyFunc_IdenticalValues()
         {
-            Assert.True(true);
-        }
-
-        [Fact]
-        private void Worker_ValidValuesAndHashFunc_Time()
-        {
-            Assert.True(true);
+            Assert.True(RunWorker((str)=>str));
         }
 
         [Fact]
         private void Worker_ValidValuesAndInvalidFunc_ExceptionThrown()
         {
-            Assert.True(true);
+            Assert.Throws<Exception>(() => RunWorker((str) => throw new Exception("test")));
         }
 
-        [Fact]
-        private void Worker_InvalidOutputValueAndEmptyFunc_ExceptionThrown()
+        private bool RunWorker(Func<string, string> func)
         {
-            Assert.True(true);
+            var inOrder = true;
+
+            var worker = new WorkerPool<string, string>(func, 8);
+            Exception ex = null;
+
+            var prod = new Thread(() =>
+            {
+                try
+                {
+                    for (int i = 0; i < 999_999; i++)
+                    {
+                        worker.Enqueue(i.ToString());
+                    }
+                    worker.CompleteAdding();
+                }
+                catch (Exception)
+                {
+                    // ignored
+                }
+            });
+
+            var cons = new Thread(() =>
+            {
+                string item = null;
+
+                for (int i = 0; i < 999_999; i++)
+                {
+                    try
+                    {
+                        item = worker.Dequeue();
+                    }
+                    catch (Exception e) { ex = e; }
+
+                    if (item == null) return;
+                }
+            });
+
+            prod.Start();
+            cons.Start();
+
+            prod.Join();
+            cons.Join();
+
+            if (ex != null) throw ex;
+
+            return inOrder;
         }
     }
 }
