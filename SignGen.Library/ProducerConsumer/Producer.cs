@@ -29,28 +29,29 @@ namespace SignGen.Library.ProducerConsumer
                 {
                     var dataBlock = GetDataBlock(bufferSize);
                     var byteBlock = ByteArrayToGenericInput(id++, dataBlock);
-
+                  
                     _queueWorker.Enqueue(byteBlock);
                 }
                 _queueWorker.CompleteAdding();
             }
             catch (Exception e) { exception = e; }
-
         }
+      
         private int NextBufferSize()
         {
             return _stream.Length - _stream.Position < _blockSize
                 ? (int)(_stream.Length - _stream.Position)
                 : _blockSize;
         }
+      
         private byte[] GetDataBlock(int bufferSize)
         {
             var buffer = new byte[bufferSize];
-
             _stream.Read(buffer, 0, buffer.Length);
 
             return buffer;
         }
+      
         private TInput ByteArrayToGenericInput(int id, byte[] blockBytes) => _factory(id, blockBytes);
     }
 }

@@ -62,6 +62,7 @@ namespace SignGen.Library
                 producer.WaitCompletion();
                 consumer.WaitCompletion();
             }
+            catch (Exception) { throw; }
         }
 
         protected virtual void Dispose(bool disposing)

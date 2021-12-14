@@ -10,6 +10,7 @@ namespace SignGen.Library.BlockingCollections
         private readonly Queue<T> _queue;
         private readonly object _locker = new object();
 
+
         #endregion
 
         #region Constructors
@@ -77,3 +78,4 @@ namespace SignGen.Library.BlockingCollections
         #endregion
     }
 }
+

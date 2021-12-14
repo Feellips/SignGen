@@ -22,7 +22,6 @@ namespace SignGen
             using var signGen = new SignatureGenerator(input, output, blockSize);
 
             signGen.Start(threads);
-        }
-        
+        }     
     }
 }

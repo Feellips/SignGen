@@ -28,6 +28,7 @@ namespace SignGen.Library.ThreadAgents
         #endregion
 
         #region Constructor
+
         public Worker(Func<TInput, TOutput> handler)
         {
             _limiter = new SemaphoreSlim(8);
@@ -41,6 +42,7 @@ namespace SignGen.Library.ThreadAgents
         }
 
         #endregion
+
 
         public void Enqueue(TInput data)
         {
@@ -104,6 +106,7 @@ namespace SignGen.Library.ThreadAgents
                     try
                     {
                         if (input != null)
+
                             result = _handler(input);
                     }
                     catch (Exception e)
