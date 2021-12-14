@@ -11,28 +11,31 @@ namespace SignGen.Library
     {
         #region Fields
 
-        private readonly Stream input;
-        private readonly Stream output;
+        private readonly Stream _input;
+        private readonly Stream _output;
 
-        private readonly string path;
-        private readonly int blockSize;
+        private readonly int _blockSize;
 
-        private bool disposedValue;
+        private bool _disposedValue;
 
         #endregion
 
         #region Constructor
-        public SignatureGenerator(Stream input, Stream output) : this(input, output, 4096) { }
+
+        public SignatureGenerator(Stream input, Stream output) : this(input, output, 4096)
+        {
+        }
+
         public SignatureGenerator(Stream input, Stream output, int blockSize)
         {
-            this.input = input;
-            this.output = output;
-            this.blockSize = blockSize;
+            _input = input;
+            _output = output;
+            _blockSize = blockSize;
         }
 
         #endregion
 
-        public string GetHashBlock(ByteBlock byteBlock)
+        private string GetHashBlock(ByteBlock byteBlock)
         {
             var hashAlgorithm = SHA256.Create();
             var data = hashAlgorithm.ComputeHash(byteBlock.Block);
@@ -48,34 +51,31 @@ namespace SignGen.Library
 
         public void Start(int threads)
         {
-            try
+            using (var pool = new WorkerPool<ByteBlock, string>(GetHashBlock, threads))
             {
-                using (var pool = new WorkerPool<ByteBlock, string>(GetHashBlock, threads))
-                {
-                    var producer = new Producer<ByteBlock, string>(ByteBlock.GetByteBlock, input, pool, blockSize);
-                    var consumer = new Consumer<ByteBlock, string>(ByteBlock.ToByteArray, pool, output);
+                var producer = new Producer<ByteBlock, string>(ByteBlock.GetByteBlock, _input, pool, _blockSize);
+                var consumer = new Consumer<ByteBlock, string>(ByteBlock.ToByteArray, pool, _output);
 
-                    producer.Start();
-                    consumer.Start();
+                producer.Start();
+                consumer.Start();
 
-                    producer.WaitCompletion();
-                    consumer.WaitCompletion();
-                }
+                producer.WaitCompletion();
+                consumer.WaitCompletion();
             }
             catch (Exception) { throw; }
         }
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!_disposedValue)
             {
                 if (disposing)
                 {
-                    input.Dispose();
-                    output.Dispose();
+                    _input.Dispose();
+                    _output.Dispose();
                 }
 
-                disposedValue = true;
+                _disposedValue = true;
             }
         }
 

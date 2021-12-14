@@ -7,25 +7,25 @@ using SignGen.Library.ThreadAgents;
 
 namespace SignGen.Library.ProducerConsumer
 {
-    internal abstract class StreamAgent<I, O> where I : class where O : class
+    internal abstract class StreamAgent<TInput, TOutput> where TInput : class where TOutput : class
     {
-        protected IBlockingQueueWorker<I, O> collection;
-
-        protected Stream stream;
-        protected Thread thread;
+        protected readonly IBlockingQueueWorker<TInput, TOutput> _queueWorker;
+        protected readonly Stream _stream;
+        protected Thread _thread;
+        
         protected Exception exception;
 
-        public StreamAgent(Stream stream, IBlockingQueueWorker<I, O> blockingQueueWorker)
+        protected StreamAgent(Stream stream, IBlockingQueueWorker<TInput, TOutput> blockingQueueWorker)
         {
-            this.stream = stream;
-            this.collection = blockingQueueWorker;
+            _stream = stream;
+            _queueWorker = blockingQueueWorker;
         }
 
-        public void Start() => thread.Start();
+        public void Start() => _thread.Start();
         public void WaitCompletion()
         {
-            if (thread.IsAlive)
-                thread.Join();
+            if (_thread.IsAlive)
+                _thread.Join();
 
             if (exception != null) throw exception;
         }

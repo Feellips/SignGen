@@ -6,24 +6,22 @@ namespace SignGen
 {
     public class FileSignature
     {
-        private readonly string path;
+        private readonly string _path;
 
         public FileSignature(string path)
         {
-            this.path = path;
+            _path = path;
         }
         public void WriteFileSignatureInConsole(int blockSize) =>
             WriteFileSignatureInConsole(blockSize, Environment.ProcessorCount);
         
         public void WriteFileSignatureInConsole(int blockSize, int threads)
         {
-            using var input = File.Open(path, FileMode.Open, FileAccess.Read);
+            using var input = File.Open(_path, FileMode.Open, FileAccess.Read);
             using var output = Console.OpenStandardOutput();
             using var signGen = new SignatureGenerator(input, output, blockSize);
 
             signGen.Start(threads);
-        }
-
-        
+        }     
     }
 }

@@ -7,8 +7,9 @@ namespace SignGen.Library.BlockingCollections
     {
         #region Fields
 
-        private Queue<T> queue;
-        private object locker;
+        private readonly Queue<T> _queue;
+        private readonly object _locker = new object();
+
 
         #endregion
 
@@ -18,14 +19,9 @@ namespace SignGen.Library.BlockingCollections
         {
         }
 
-        public BlockingQueueWrapper(int initialCapacity) : this(new Queue<T>(initialCapacity))
-        {
-        }
-
         public BlockingQueueWrapper(IEnumerable<T> collection)
         {
-            queue = new Queue<T>(collection);
-            locker = new object();
+            _queue = new Queue<T>(collection);
         }
 
         #endregion
@@ -34,9 +30,9 @@ namespace SignGen.Library.BlockingCollections
 
         public void Enqueue(T item)
         {
-            lock (locker)
+            lock (_locker)
             {
-                queue.Enqueue(item);
+                _queue.Enqueue(item);
             }
         }
 
@@ -44,9 +40,9 @@ namespace SignGen.Library.BlockingCollections
         {
             T item;
 
-            lock (locker)
+            lock (_locker)
             {
-                item = queue.Dequeue();
+                item = _queue.Dequeue();
             }
 
             return item;
@@ -56,29 +52,30 @@ namespace SignGen.Library.BlockingCollections
         {
             get
             {
-                lock (locker)
+                lock (_locker)
                 {
-                    return queue.Count;
+                    return _queue.Count;
                 }
             }
         }
 
         public IEnumerator GetEnumerator()
         {
-            lock (locker)
+            lock (_locker)
             {
-                return queue.GetEnumerator();
+                return _queue.GetEnumerator();
+            }
+        }
+
+        public void Clear()
+        {
+            lock (_locker)
+            {
+                _queue.Clear();
             }
         }
 
         #endregion
-
-        public void Clear()
-        {
-            lock (locker)
-            {
-                queue.Clear();
-            }
-        }
     }
 }
+

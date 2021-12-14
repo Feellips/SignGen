@@ -2,10 +2,10 @@
 
 namespace SignGen.Library.ThreadAgents
 {
-    public interface IBlockingQueueWorker<I, O> : IDisposable where I : class where O : class
+    public interface IBlockingQueueWorker<TInput, TOutput> : IDisposable where TInput : class where TOutput : class
     {
-        void Enqueue(I item);
-        O Dequeue();
+        void Enqueue(TInput item);
+        TOutput Dequeue();
         void CompleteAdding();
     }
 }

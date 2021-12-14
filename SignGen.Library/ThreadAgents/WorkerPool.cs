@@ -3,72 +3,55 @@ using System.Collections.Generic;
 
 namespace SignGen.Library.ThreadAgents
 {
-    public class WorkerPool<I, O> : IBlockingQueueWorker<I, O> where I : class where O : class
+    public class WorkerPool<TInput, TOutput> : IBlockingQueueWorker<TInput, TOutput> where TInput : class where TOutput : class
     {
         #region Fields
 
-        private readonly List<Worker<I, O>> workers;
+        private readonly List<Worker<TInput, TOutput>> _workers;
 
-        private readonly IEnumerator<Worker<I, O>> producerEnum;
-        private readonly IEnumerator<Worker<I, O>> consumerEnum;
+        private readonly IEnumerator<Worker<TInput, TOutput>> _producerEnum;
+        private readonly IEnumerator<Worker<TInput, TOutput>> _consumerEnum;
 
-        private bool isDisposed;
+        private bool _isDisposed;
 
         #endregion
 
-        #region Constructor
-        public WorkerPool(Func<I, O> handler, int threadCount)
+        public WorkerPool(Func<TInput, TOutput> handler, int threadCount)
         {
             if (threadCount < 1) throw new ArgumentException($"{nameof(threadCount)} can't be lower than 1.");
 
-            workers = new List<Worker<I, O>>(threadCount);
+            _workers = new List<Worker<TInput, TOutput>>(threadCount);
 
             for (int i = 0; i < threadCount; i++)
-                workers.Add(new Worker<I, O>(handler));
+                _workers.Add(new Worker<TInput, TOutput>(handler));
 
-            producerEnum = workers.GetEnumerator();
-            consumerEnum = workers.GetEnumerator();
+            _producerEnum = _workers.GetEnumerator();
+            _consumerEnum = _workers.GetEnumerator();
         }
 
-        #endregion
-
-        public void Enqueue(I data)
+        public void Enqueue(TInput data)
         {
             CheckDisposed();
 
-            var worker = GetNextWorker(producerEnum);
+            var worker = GetNextWorker(_producerEnum);
 
-            try
-            {
-                worker.Enqueue(data);
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            worker.Enqueue(data);
         }
-        public O Dequeue()
+        public TOutput Dequeue()
         {
             CheckDisposed();
 
-            O result;
+            TOutput result;
 
-            var worker = GetNextWorker(consumerEnum);
+            var worker = GetNextWorker(_consumerEnum);
 
-            try
-            {
-                result = worker.Dequeue();
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            result = worker.Dequeue();
 
             return result;
         }
-        private Worker<I, O> GetNextWorker(IEnumerator<Worker<I, O>> workerEnumerator)
+        private Worker<TInput, TOutput> GetNextWorker(IEnumerator<Worker<TInput, TOutput>> workerEnumerator)
         {
-            if (!workerEnumerator.MoveNext())
+            if (workerEnumerator.MoveNext() == false)
             {
                 workerEnumerator.Reset();
                 workerEnumerator.MoveNext();
@@ -80,7 +63,7 @@ namespace SignGen.Library.ThreadAgents
         {
             CheckDisposed();
 
-            var worker = GetNextWorker(producerEnum);
+            var worker = GetNextWorker(_producerEnum);
             worker.CompleteAdding();
         }
 
@@ -88,20 +71,20 @@ namespace SignGen.Library.ThreadAgents
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!isDisposed)
+            if (_isDisposed == false)
             {
                 if (disposing)
                 {
-                    foreach (var item in workers)
+                    foreach (var item in _workers)
                     {
                         item.Dispose();
                     }
 
-                    producerEnum.Dispose();
-                    consumerEnum.Dispose();
+                    _producerEnum.Dispose();
+                    _consumerEnum.Dispose();
                 }
 
-                isDisposed = true;
+                _isDisposed = true;
             }
         }
         public void Dispose()
@@ -111,7 +94,7 @@ namespace SignGen.Library.ThreadAgents
         }
         private void CheckDisposed()
         {
-            if (isDisposed)
+            if (_isDisposed)
             {
                 throw new ObjectDisposedException(GetType().Name);
             }

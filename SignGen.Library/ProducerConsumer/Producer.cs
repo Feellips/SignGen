@@ -5,18 +5,17 @@ using SignGen.Library.ThreadAgents;
 
 namespace SignGen.Library.ProducerConsumer
 {
-    internal class Producer<I, O> : StreamAgent<I, O> where I : class where O : class
+    internal class Producer<TInput, TOutput> : StreamAgent<TInput, TOutput> where TInput : class where TOutput : class
     {
-        private readonly Func<int, byte[], I> factory;
+        private readonly Func<int, byte[], TInput> _factory;
+        private readonly int _blockSize;
 
-        private readonly int blockSize;
-
-        public Producer(Func<int, byte[], I> factory, Stream source, IBlockingQueueWorker<I, O> destination, int blockSize) : base(source, destination)
+        public Producer(Func<int, byte[], TInput> factory, Stream source, IBlockingQueueWorker<TInput, TOutput> destination, int blockSize) : base(source, destination)
         {
-            thread = new Thread(ProduceItems);
+            _thread = new Thread(ProduceItems);
 
-            this.factory = factory;
-            this.blockSize = blockSize;
+            _factory = factory;
+            _blockSize = blockSize;
         }
 
         private void ProduceItems()
@@ -30,28 +29,29 @@ namespace SignGen.Library.ProducerConsumer
                 {
                     var dataBlock = GetDataBlock(bufferSize);
                     var byteBlock = ByteArrayToGenericInput(id++, dataBlock);
-
-                    collection.Enqueue(byteBlock);
+                  
+                    _queueWorker.Enqueue(byteBlock);
                 }
-                collection.CompleteAdding();
+                _queueWorker.CompleteAdding();
             }
             catch (Exception e) { exception = e; }
-
         }
+      
         private int NextBufferSize()
         {
-            return stream.Length - stream.Position < blockSize
-                ? (int)(stream.Length - stream.Position)
-                : blockSize;
+            return _stream.Length - _stream.Position < _blockSize
+                ? (int)(_stream.Length - _stream.Position)
+                : _blockSize;
         }
+      
         private byte[] GetDataBlock(int bufferSize)
         {
             var buffer = new byte[bufferSize];
-
-            stream.Read(buffer, 0, buffer.Length);
+            _stream.Read(buffer, 0, buffer.Length);
 
             return buffer;
         }
-        private I ByteArrayToGenericInput(int id, byte[] blockBytes) => factory(id, blockBytes);
+      
+        private TInput ByteArrayToGenericInput(int id, byte[] blockBytes) => _factory(id, blockBytes);
     }
 }

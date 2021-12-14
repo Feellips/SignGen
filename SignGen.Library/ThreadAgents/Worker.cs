@@ -5,120 +5,120 @@ using SignGen.Library.ThreadAgents.Exceptions;
 
 namespace SignGen.Library.ThreadAgents
 {
-    public class Worker<I, O> : IBlockingQueueWorker<I, O> where I : class where O : class
+    public class Worker<TInput, TOutput> : IBlockingQueueWorker<TInput, TOutput> where TInput : class where TOutput : class
     {
         #region Fields
 
-        private readonly Func<I, O> handler;
-        private readonly Thread workerThread;
+        private readonly Func<TInput, TOutput> _handler;
+        private readonly Thread _workerThread;
 
-        private readonly object inLocker;
-        private readonly object outLocker;
+        private readonly object _inLocker = new object();
+        private readonly object _outLocker = new object();
 
-        private readonly BlockingQueueWrapper<I> workToDo;
-        private readonly BlockingQueueWrapper<O> doneWork;
+        private readonly BlockingQueueWrapper<TInput> _workToDo;
+        private readonly BlockingQueueWrapper<TOutput> _doneWork;
 
-        private readonly SemaphoreSlim limiter;
+        private readonly SemaphoreSlim _limiter;
 
-        private volatile Exception exception;
+        private volatile Exception _exception;
 
-        private bool isDisposed;
-        private bool isCompleted;
+        private bool _isDisposed;
+        private bool _isCompleted;
 
         #endregion
 
         #region Constructor
-        public Worker(Func<I, O> handler)
+
+        public Worker(Func<TInput, TOutput> handler)
         {
-            inLocker = new object();
-            outLocker = new object();
+            _limiter = new SemaphoreSlim(8);
 
-            limiter = new SemaphoreSlim(8);
+            _workToDo = new BlockingQueueWrapper<TInput>();
+            _doneWork = new BlockingQueueWrapper<TOutput>();
 
-            workToDo = new BlockingQueueWrapper<I>();
-            doneWork = new BlockingQueueWrapper<O>();
-
-            this.handler = handler;
-            this.workerThread = new Thread(Consume);
-            this.workerThread.Start();
+            _handler = handler;
+            _workerThread = new Thread(Consume);
+            _workerThread.Start();
         }
 
         #endregion
 
-        public void Enqueue(I data)
+
+        public void Enqueue(TInput data)
         {
             CheckDisposed();
 
-            limiter.Wait();
+            _limiter.Wait();
 
-            if (!workerThread.IsAlive || isCompleted) throw new WorkerStoppedException();
+            if (_workerThread.IsAlive == false || _isCompleted) throw new WorkerStoppedException();
 
             EnqueueDirectly(data);
         }
-        private void EnqueueDirectly(I data)
+        private void EnqueueDirectly(TInput data)
         {
-            lock (inLocker)
+            lock (_inLocker)
             {
-                workToDo.Enqueue(data);
-                Monitor.Pulse(inLocker);
+                _workToDo.Enqueue(data);
+                Monitor.Pulse(_inLocker);
             }
         }
-        public O Dequeue()
+        public TOutput Dequeue()
         {
-            O result;
+            TOutput result;
 
-            lock (outLocker)
+            lock (_outLocker)
             {
-                while (doneWork.Count == 0) Monitor.Wait(outLocker);
+                while (_doneWork.Count == 0) Monitor.Wait(_outLocker);
 
-                result = doneWork.Dequeue();
+                result = _doneWork.Dequeue();
 
-                Monitor.Pulse(outLocker);
+                Monitor.Pulse(_outLocker);
             }
 
-            limiter.Release();
+            _limiter.Release();
 
-            if (exception != null) throw exception;
+            if (_exception != null) throw _exception;
 
             return result;
         }
         public void CompleteAdding()
         {
             EnqueueDirectly(null);
-            limiter.Release();
-            isCompleted = true;
+            _limiter.Release();
+            _isCompleted = true;
         }
         private void Consume()
         {
-            I input;
-            O result = null;
+            TInput input;
+            TOutput result = null;
 
             while (true)
             {
-                lock (inLocker)
+                lock (_inLocker)
                 {
-                    if (workToDo.Count == 0) Monitor.Wait(inLocker);
+                    if (_workToDo.Count == 0) Monitor.Wait(_inLocker);
 
-                    input = workToDo.Dequeue();
+                    input = _workToDo.Dequeue();
                 }
 
-                lock (outLocker)
+                lock (_outLocker)
                 {
                     try
                     {
                         if (input != null)
-                            result = handler(input);
+
+                            result = _handler(input);
                     }
                     catch (Exception e)
                     {
-                        exception = e;
+                        _exception = e;
                     }
                     finally
                     {
-                        doneWork.Enqueue(result);
+                        _doneWork.Enqueue(result);
                     }
 
-                    Monitor.Pulse(outLocker);
+                    Monitor.Pulse(_outLocker);
                 }
 
                 if (result == null) return;
@@ -132,19 +132,19 @@ namespace SignGen.Library.ThreadAgents
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!isDisposed)
+            if (_isDisposed == false)
             {
                 if (disposing)
                 {
-                    if (workerThread.IsAlive)
+                    if (_workerThread.IsAlive)
                     {
                         CompleteAdding();
-                        workerThread.Join();
+                        _workerThread.Join();
                     }
-                    limiter.Dispose();
+                    _limiter.Dispose();
                 }
 
-                isDisposed = true;
+                _isDisposed = true;
             }
         }
         public void Dispose()
@@ -154,7 +154,7 @@ namespace SignGen.Library.ThreadAgents
         }
         private void CheckDisposed()
         {
-            if (isDisposed)
+            if (_isDisposed)
             {
                 throw new ObjectDisposedException(GetType().Name);
             }

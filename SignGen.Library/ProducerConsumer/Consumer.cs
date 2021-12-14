@@ -5,36 +5,41 @@ using SignGen.Library.ThreadAgents;
 
 namespace SignGen.Library.ProducerConsumer
 {
-    internal class Consumer<I, O> : StreamAgent<I, O> where I : class where O : class
+    internal class Consumer<TInput, TOutput> : StreamAgent<TInput, TOutput> where TInput : class where TOutput : class
     {
-        private readonly Func<O, byte[]> converter;
+        private readonly Func<TOutput, byte[]> _converter;
 
-        public Consumer(Func<O, byte[]> converter, IBlockingQueueWorker<I, O> source, Stream destination) : base(destination, source)
+        public Consumer(Func<TOutput, byte[]> converter,
+                        IBlockingQueueWorker<TInput, TOutput> source,
+                        Stream destination)
+                        : base(destination, source)
         {
-            this.converter = converter;
-            thread = new Thread(ConsumeItems);
+            _converter = converter;
+            _thread = new Thread(ConsumeItems);
         }
 
         private void ConsumeItems()
         {
-            O item;
+            TOutput item;
 
             try
             {
-                while ((item = collection.Dequeue()) != null)
+                while ((item = _queueWorker.Dequeue()) != null)
                 {
                     var byteBlock = GenericOutputToByteArray(item);
 
-                    stream.Write(byteBlock, 0, byteBlock.Length);
+                    _stream.Write(byteBlock, 0, byteBlock.Length);
                 }
             }
             catch (Exception e)
             {
                 exception = e;
-                collection.Dispose();
+            }
+            finally
+            {
+                _queueWorker.Dispose();
             }
         }
-
-        public byte[] GenericOutputToByteArray(O output) => converter(output);
+        private byte[] GenericOutputToByteArray(TOutput output) => _converter(output);
     }
 }

@@ -13,7 +13,6 @@ namespace SignGen.Library.ProducerConsumer
             Block = block;
         }
         public static ByteBlock GetByteBlock(int id, byte[] block) => new ByteBlock(id, block);
-
         public static byte[] ToByteArray(string byteBlock) => Encoding.ASCII.GetBytes(byteBlock);
          
     }

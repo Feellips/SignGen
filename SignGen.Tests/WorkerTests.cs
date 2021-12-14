@@ -36,7 +36,7 @@ namespace SignGen.Tests
                     }
                     worker.CompleteAdding();
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     // ignored
                 }
