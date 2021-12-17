@@ -1,20 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace SignGen.Library.ThreadAgents
+namespace SignGen.ThreadAgents
 {
     public class WorkerPool<TInput, TOutput> : IBlockingQueueWorker<TInput, TOutput> where TInput : class where TOutput : class
     {
-        #region Fields
-
         private readonly List<Worker<TInput, TOutput>> _workers;
 
         private readonly IEnumerator<Worker<TInput, TOutput>> _producerEnum;
         private readonly IEnumerator<Worker<TInput, TOutput>> _consumerEnum;
 
         private bool _isDisposed;
-
-        #endregion
 
         public WorkerPool(Func<TInput, TOutput> handler, int threadCount)
         {
@@ -37,6 +33,7 @@ namespace SignGen.Library.ThreadAgents
 
             worker.Enqueue(data);
         }
+        
         public TOutput Dequeue()
         {
             CheckDisposed();
@@ -49,6 +46,7 @@ namespace SignGen.Library.ThreadAgents
 
             return result;
         }
+        
         private Worker<TInput, TOutput> GetNextWorker(IEnumerator<Worker<TInput, TOutput>> workerEnumerator)
         {
             if (workerEnumerator.MoveNext() == false)
@@ -59,6 +57,7 @@ namespace SignGen.Library.ThreadAgents
 
             return workerEnumerator.Current;
         }
+        
         public void CompleteAdding()
         {
             CheckDisposed();
@@ -87,11 +86,13 @@ namespace SignGen.Library.ThreadAgents
                 _isDisposed = true;
             }
         }
+        
         public void Dispose()
         {
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
+        
         private void CheckDisposed()
         {
             if (_isDisposed)

@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
-using SignGen.Library.ThreadAgents;
+using SignGen.ThreadAgents;
 
-namespace SignGen.Library.ProducerConsumer
+namespace SignGen.ProducerConsumer
 {
     internal class Consumer<TInput, TOutput> : StreamAgent<TInput, TOutput> where TInput : class where TOutput : class
     {
@@ -14,8 +14,10 @@ namespace SignGen.Library.ProducerConsumer
                         Stream destination)
                         : base(destination, source)
         {
+            if (destination.CanWrite == false) throw new ArgumentException($"Can't write to {nameof(destination)}");
+            
             _converter = converter;
-            _thread = new Thread(ConsumeItems);
+            AgentThread = new Thread(ConsumeItems);
         }
 
         private void ConsumeItems()
@@ -24,22 +26,23 @@ namespace SignGen.Library.ProducerConsumer
 
             try
             {
-                while ((item = _queueWorker.Dequeue()) != null)
+                while ((item = QueueWorker.Dequeue()) != null)
                 {
                     var byteBlock = GenericOutputToByteArray(item);
 
-                    _stream.Write(byteBlock, 0, byteBlock.Length);
+                    ActiveStream.Write(byteBlock, 0, byteBlock.Length);
                 }
             }
             catch (Exception e)
             {
-                exception = e;
+                ThreadException = e;
             }
             finally
             {
-                _queueWorker.Dispose();
+                QueueWorker.Dispose();
             }
         }
+        
         private byte[] GenericOutputToByteArray(TOutput output) => _converter(output);
     }
 }

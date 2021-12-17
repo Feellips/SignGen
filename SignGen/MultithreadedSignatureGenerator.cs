@@ -1,52 +1,35 @@
-﻿using System;
+using System;
 using System.IO;
-using System.Security.Cryptography;
-using System.Text;
-using SignGen.Library.ProducerConsumer;
-using SignGen.Library.ThreadAgents;
+using SignGen.ProducerConsumer;
+using SignGen.ThreadAgents;
 
-namespace SignGen.Library
+namespace SignGen
 {
-    public class SignatureGenerator : IDisposable
+    public sealed class MultithreadedSignatureGenerator : IDisposable
     {
-        #region Fields
-
         private readonly Stream _input;
         private readonly Stream _output;
 
         private readonly int _blockSize;
+        private readonly HashCalculator _hashCalculator;
 
         private bool _disposedValue;
 
-        #endregion
-
-        #region Constructor
-
-        public SignatureGenerator(Stream input, Stream output) : this(input, output, 4096)
+        public MultithreadedSignatureGenerator(Stream input, Stream output) : this(input, output, 4096)
         {
         }
 
-        public SignatureGenerator(Stream input, Stream output, int blockSize)
+        public MultithreadedSignatureGenerator(Stream input, Stream output, int blockSize)
         {
+            if (input.CanRead == false) throw new ArgumentException($"Can't read from {nameof(input)}");
+            if (output.CanWrite == false) throw new ArgumentException($"Can't write to {nameof(output)}");
+            if (blockSize < 8 || blockSize > 1024 * 10)
+                throw new ArgumentException($"{nameof(blockSize)} should be from 8 byte to 10 MGb");
+
             _input = input;
             _output = output;
             _blockSize = blockSize;
-        }
-
-        #endregion
-
-        private string GetHashBlock(ByteBlock byteBlock)
-        {
-            var hashAlgorithm = SHA256.Create();
-            var data = hashAlgorithm.ComputeHash(byteBlock.Block);
-            var sBuilder = new StringBuilder();
-
-            foreach (var item in data)
-            {
-                sBuilder.Append(item.ToString("x2"));
-            }
-
-            return $"{byteBlock.ID}. {sBuilder} \r\n";
+            _hashCalculator = new HashCalculator();
         }
 
         public void Start(int threads)
@@ -64,7 +47,13 @@ namespace SignGen.Library
             }
         }
 
-        protected virtual void Dispose(bool disposing)
+        private string GetHashBlock(ByteBlock byteBlock)
+        {
+            string hashBlock = _hashCalculator.Compute(byteBlock.Block);
+            return $"{byteBlock.Id} {hashBlock} {Environment.NewLine}";
+        }
+
+        private void Dispose(bool disposing)
         {
             if (_disposedValue == false)
             {
@@ -81,7 +70,6 @@ namespace SignGen.Library
         public void Dispose()
         {
             Dispose(disposing: true);
-            GC.SuppressFinalize(this);
         }
     }
 }

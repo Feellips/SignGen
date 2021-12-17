@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Threading;
-using SignGen.Library.BlockingCollections;
-using SignGen.Library.ThreadAgents.Exceptions;
+using SignGen.BlockingCollections;
+using SignGen.ThreadAgents.Exceptions;
 
-namespace SignGen.Library.ThreadAgents
+namespace SignGen.ThreadAgents
 {
     public class Worker<TInput, TOutput> : IBlockingQueueWorker<TInput, TOutput> where TInput : class where TOutput : class
     {
-        #region Fields
-
         private readonly Func<TInput, TOutput> _handler;
         private readonly Thread _workerThread;
 
@@ -20,14 +18,10 @@ namespace SignGen.Library.ThreadAgents
 
         private readonly SemaphoreSlim _limiter;
 
-        private volatile Exception _exception;
+        private Exception _exception;
 
         private bool _isDisposed;
         private bool _isCompleted;
-
-        #endregion
-
-        #region Constructor
 
         public Worker(Func<TInput, TOutput> handler)
         {
@@ -41,9 +35,6 @@ namespace SignGen.Library.ThreadAgents
             _workerThread.Start();
         }
 
-        #endregion
-
-
         public void Enqueue(TInput data)
         {
             CheckDisposed();
@@ -54,6 +45,7 @@ namespace SignGen.Library.ThreadAgents
 
             EnqueueDirectly(data);
         }
+        
         private void EnqueueDirectly(TInput data)
         {
             lock (_inLocker)
@@ -62,6 +54,7 @@ namespace SignGen.Library.ThreadAgents
                 Monitor.Pulse(_inLocker);
             }
         }
+        
         public TOutput Dequeue()
         {
             TOutput result;
@@ -81,12 +74,14 @@ namespace SignGen.Library.ThreadAgents
 
             return result;
         }
+        
         public void CompleteAdding()
         {
             EnqueueDirectly(null);
             _limiter.Release();
             _isCompleted = true;
         }
+        
         private void Consume()
         {
             TInput input;

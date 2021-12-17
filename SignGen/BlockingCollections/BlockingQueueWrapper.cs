@@ -1,32 +1,17 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 
-namespace SignGen.Library.BlockingCollections
+namespace SignGen.BlockingCollections
 {
-    public class BlockingQueueWrapper<T> : IEnumerable
+    public class BlockingQueueWrapper<T> : IEnumerable<T>
     {
-        #region Fields
-
         private readonly Queue<T> _queue;
         private readonly object _locker = new object();
 
-
-        #endregion
-
-        #region Constructors
-
-        public BlockingQueueWrapper() : this(new Queue<T>())
+        public BlockingQueueWrapper()
         {
+            _queue = new Queue<T>();
         }
-
-        public BlockingQueueWrapper(IEnumerable<T> collection)
-        {
-            _queue = new Queue<T>(collection);
-        }
-
-        #endregion
-
-        #region Public
 
         public void Enqueue(T item)
         {
@@ -59,7 +44,8 @@ namespace SignGen.Library.BlockingCollections
             }
         }
 
-        public IEnumerator GetEnumerator()
+
+        public IEnumerator<T> GetEnumerator()
         {
             lock (_locker)
             {
@@ -67,15 +53,7 @@ namespace SignGen.Library.BlockingCollections
             }
         }
 
-        public void Clear()
-        {
-            lock (_locker)
-            {
-                _queue.Clear();
-            }
-        }
-
-        #endregion
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }
 
