@@ -1,6 +1,6 @@
-﻿using SignGen.Validators;
+﻿using SignGen.Demo.Validators;
 
-namespace SignGen.Exstensions
+namespace SignGen.Demo.Exstensions
 {
     internal static class ControlValidationExtension
     {

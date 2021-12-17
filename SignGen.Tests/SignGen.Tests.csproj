@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SignGen.Library\SignGen.Library.csproj" />
+    <ProjectReference Include="..\SignGen\SignGen.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,7 +1,8 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 
-namespace SignGen.Validators
+namespace SignGen.Demo.Validators
 {
     public class ArgsValidator
     {
@@ -9,13 +10,15 @@ namespace SignGen.Validators
 
         public ArgsValidator(string[] args) => this.args = args;
 
-        public ArgsValidator IsNotNull()
+        public ArgsValidator IsNotEmpty()
         {
-            if (args == null)
-                throw new ArgumentNullException("Error: No arguments were found.");
+            if (args.Any() == false)
+                throw new ArgumentException(
+                    "Please specify filename and block size in such manner: SignGen.exe [filename] [block size]");
 
             return this;
         }
+
         public ArgsValidator IsEnoughArgs(int num)
         {
             if (args.Length != num)
@@ -23,18 +26,19 @@ namespace SignGen.Validators
 
             return this;
         }
-        public ArgsValidator IsSourceFileExist(int argPosition)
+
+        public ArgsValidator IsSourceFileExist(string filename)
         {
-            if (!File.Exists(args[argPosition]))
+            if (File.Exists(filename) == false)
                 throw new ArgumentException("Error: Source file does not exist.");
 
             return this;
         }
 
-        public ArgsValidator IsBlockSizeValid(int argPosition)
+        public ArgsValidator IsBlockSizeValid(string blockSize)
         {
-            if (!int.TryParse(args[argPosition], out int result))
-                throw new ArgumentException($"{args[argPosition]} is not a number.");
+            if (int.TryParse(blockSize, out int result) == false)
+                throw new ArgumentException($"{blockSize} is not a number.");
 
             if (result <= 0) throw new ArgumentException("Error: block size must be positive and more than zero.");
 

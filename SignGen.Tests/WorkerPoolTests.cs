@@ -1,6 +1,6 @@
 using System;
 using System.Threading;
-using SignGen.Library.ThreadAgents;
+using SignGen.ThreadAgents;
 using Xunit;
 
 namespace SignGen.Tests
@@ -16,7 +16,7 @@ namespace SignGen.Tests
         [Fact]
         private void WorkerPool_ValidValuesAndInvalidFunc_ExceptionThrown()
         {
-            Assert.Throws<Exception>(() => RunWorkerPool((str) => throw new Exception("test")));
+            Assert.Throws<Exception>(() => RunWorkerPool((_) => throw new Exception("test")));
         }
 
         private bool RunWorkerPool(Func<string, string> func)

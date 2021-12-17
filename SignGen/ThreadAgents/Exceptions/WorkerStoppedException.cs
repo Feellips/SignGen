@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SignGen.Library.ThreadAgents.Exceptions
+namespace SignGen.ThreadAgents.Exceptions
 {
     public class WorkerStoppedException : Exception
     {
