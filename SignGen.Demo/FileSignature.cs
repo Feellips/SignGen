@@ -19,7 +19,7 @@ namespace SignGen.Demo
         {
             using var input = File.Open(_path, FileMode.Open, FileAccess.Read);
             using var output = Console.OpenStandardOutput();
-            using var signGen = new MultithreadedSignatureGenerator(input, output, _blockSize);
+            using var signGen = new SignatureGenerator(input, output, _blockSize);
 
             signGen.Start(threads);
         }

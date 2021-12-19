@@ -7,7 +7,7 @@ namespace SignGen.Demo
     {
         public static void Main(string[] args)
         {
-           // args = new[] {@"C:\Users\filf\Downloads\blender-3.0.0-windows-x64.msi", "1024"};
+           args = new[] {@"C:\Users\filf\Downloads\blender-3.0.0-windows-x64.msi", "1024"};
             
             try
             {

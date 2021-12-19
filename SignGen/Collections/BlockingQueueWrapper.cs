@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 
-namespace SignGen.BlockingCollections
+namespace SignGen.Workers
 {
     public class BlockingQueueWrapper<T> : IEnumerable<T>
     {

@@ -1,4 +1,4 @@
-﻿namespace SignGen.ProducerConsumer
+﻿namespace SignGen.Models
 {
     public interface IByteBlock
     {

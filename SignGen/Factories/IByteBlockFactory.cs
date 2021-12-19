@@ -1,4 +1,6 @@
-﻿namespace SignGen.ProducerConsumer
+﻿using SignGen.Models;
+
+namespace SignGen.Factories
 {
     public interface IByteBlockFactory
     {

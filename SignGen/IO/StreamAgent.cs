@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
-using SignGen.ThreadAgents;
+using SignGen.Workers;
 
-namespace SignGen.ProducerConsumer
+namespace SignGen.IO
 {
     internal abstract class StreamAgent<TInput, TOutput> where TInput : class where TOutput : class
     {

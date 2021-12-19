@@ -1,12 +1,14 @@
 using System;
 using System.IO;
 using System.Text;
-using SignGen.ProducerConsumer;
-using SignGen.ThreadAgents;
+using SignGen.Factories;
+using SignGen.IO;
+using SignGen.Models;
+using SignGen.Workers;
 
 namespace SignGen
 {
-    public sealed class MultithreadedSignatureGenerator : IDisposable
+    public sealed class SignatureGenerator : IDisposable
     {
         private readonly Stream _input;
         private readonly Stream _output;
@@ -18,11 +20,7 @@ namespace SignGen
 
         private bool _disposedValue;
 
-        public MultithreadedSignatureGenerator(Stream input, Stream output) : this(input, output, 4096)
-        {
-        }
-
-        public MultithreadedSignatureGenerator(Stream input, Stream output, int blockSize)
+        public SignatureGenerator(Stream input, Stream output, int blockSize)
         {
             if (input.CanRead == false) throw new ArgumentException($"Can't read from {nameof(input)}");
             if (output.CanWrite == false) throw new ArgumentException($"Can't write to {nameof(output)}");

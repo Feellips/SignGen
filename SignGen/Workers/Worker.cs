@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Threading;
-using SignGen.BlockingCollections;
-using SignGen.ThreadAgents.Exceptions;
+using SignGen.Workers.Exceptions;
 
-namespace SignGen.ThreadAgents
+namespace SignGen.Workers
 {
     public class Worker<TInput, TOutput> : IBlockingQueueWorker<TInput, TOutput> where TInput : class where TOutput : class
     {

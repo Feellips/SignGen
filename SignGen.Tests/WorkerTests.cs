@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading;
-using SignGen.ThreadAgents;
+using SignGen.Workers;
 using Xunit;
 
 namespace SignGen.Tests
