@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using SignGen.ProducerConsumer;
 using SignGen.ThreadAgents;
 
@@ -11,7 +12,9 @@ namespace SignGen
         private readonly Stream _output;
 
         private readonly int _blockSize;
+
         private readonly HashCalculator _hashCalculator;
+        private readonly IByteBlockFactory _byteBlockFactory;
 
         private bool _disposedValue;
 
@@ -29,15 +32,17 @@ namespace SignGen
             _input = input;
             _output = output;
             _blockSize = blockSize;
+
             _hashCalculator = new HashCalculator();
+            _byteBlockFactory = new ByteBlockFactory();
         }
 
         public void Start(int threads)
         {
-            using (var pool = new WorkerPool<ByteBlock, string>(GetHashBlock, threads))
+            using (var pool = new WorkerPool<IByteBlock, string>(GetHashBlock, threads))
             {
-                var producer = new Producer<ByteBlock, string>(ByteBlock.GetByteBlock, _input, pool, _blockSize);
-                var consumer = new Consumer<ByteBlock, string>(ByteBlock.ToByteArray, pool, _output);
+                var producer = new Producer<IByteBlock, string>(_byteBlockFactory.Create, _input, pool, _blockSize);
+                var consumer = new Consumer<IByteBlock, string>(Encoding.ASCII.GetBytes, pool, _output);
 
                 producer.Start();
                 consumer.Start();
@@ -47,9 +52,9 @@ namespace SignGen
             }
         }
 
-        private string GetHashBlock(ByteBlock byteBlock)
+        private string GetHashBlock(IByteBlock byteBlock)
         {
-            string hashBlock = _hashCalculator.Compute(byteBlock.Block);
+            string hashBlock = _hashCalculator.Compute(byteBlock.Data);
             return $"{byteBlock.Id} {hashBlock} {Environment.NewLine}";
         }
 

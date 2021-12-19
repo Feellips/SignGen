@@ -1,18 +1,14 @@
-﻿using System.Text;
-
-namespace SignGen.ProducerConsumer
+﻿namespace SignGen.ProducerConsumer
 {
-    public class ByteBlock
+    public class ByteBlock : IByteBlock
     {
         public int Id { get; }
-        public byte[] Block { get; }
+        public byte[] Data { get; }
 
-        private ByteBlock(int id, byte[] block)
+        public ByteBlock(int id, byte[] data)
         {
             Id = id;
-            Block = block;
+            Data = data;
         }
-        public static ByteBlock GetByteBlock(int id, byte[] block) => new ByteBlock(id, block);
-        public static byte[] ToByteArray(string byteBlock) => Encoding.ASCII.GetBytes(byteBlock);
     }
 }
