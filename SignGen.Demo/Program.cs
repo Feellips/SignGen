@@ -7,6 +7,8 @@ namespace SignGen.Demo
     {
         public static void Main(string[] args)
         {
+           args = new[] { @"D:\Program Files (x86)\Rocksmith 2014\audio.psarc", "1024"};
+            
             try
             {
                 args.Rules().

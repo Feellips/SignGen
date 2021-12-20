@@ -2,18 +2,19 @@ using System;
 using System.IO;
 using System.Text;
 using SignGen.Factories;
-using SignGen.IO;
-using SignGen.Models;
-using SignGen.Workers;
+using SignGen.ThreadJuggler.Factories;
+using SignGen.ThreadJuggler.IO;
+using SignGen.ThreadJuggler.Models;
+using SignGen.ThreadJuggler.Workers;
 
 namespace SignGen
 {
     public sealed class SignatureGenerator : IDisposable
     {
+        private readonly int _blockSize;
+
         private readonly Stream _input;
         private readonly Stream _output;
-
-        private readonly int _blockSize;
 
         private readonly HashCalculator _hashCalculator;
         private readonly IByteBlockFactory _byteBlockFactory;

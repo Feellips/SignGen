@@ -1,4 +1,5 @@
-using SignGen.Models;
+using SignGen.ThreadJuggler.Factories;
+using SignGen.ThreadJuggler.Models;
 
 namespace SignGen.Factories
 {

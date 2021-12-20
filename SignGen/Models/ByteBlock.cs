@@ -1,4 +1,4 @@
-﻿namespace SignGen.Models
+﻿namespace SignGen.ThreadJuggler.Models
 {
     public class ByteBlock : IByteBlock
     {

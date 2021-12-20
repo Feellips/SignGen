@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
-using SignGen.Workers.Exceptions;
+using SignGen.ThreadJuggler.Workers.Exceptions;
 using Xunit;
 
 namespace SignGen.Tests
@@ -54,7 +54,7 @@ namespace SignGen.Tests
 
         private void InterruptStream(Stream stream)
         {
-            Thread.Sleep(1);
+            Thread.Sleep(5);
             stream.Dispose();
         }
 
