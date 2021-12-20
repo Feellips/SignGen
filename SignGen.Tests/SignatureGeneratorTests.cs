@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading;
-using SignGen.ThreadAgents.Exceptions;
+using SignGen.ThreadJuggler.Workers.Exceptions;
 using Xunit;
 
 namespace SignGen.Tests
@@ -55,7 +54,7 @@ namespace SignGen.Tests
 
         private void InterruptStream(Stream stream)
         {
-            Thread.Sleep(1);
+            Thread.Sleep(5);
             stream.Dispose();
         }
 
@@ -70,7 +69,7 @@ namespace SignGen.Tests
             var input = File.Open(inputPath, FileMode.Open, FileAccess.Read);
             var output = File.Open(outputPath, FileMode.Open, FileAccess.Write);
 
-            using var sigen = new MultithreadedSignatureGenerator(input, output);
+            using var sigen = new SignatureGenerator(input, output, 4096);
 
             var thread = new Thread(() =>
             {
