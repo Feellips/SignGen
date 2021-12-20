@@ -6,25 +6,27 @@ namespace SignGen.Workers
 {
     public class Worker<TInput, TOutput> : IBlockingQueueWorker<TInput, TOutput> where TInput : class where TOutput : class
     {
+        private const int WorkLimit = 8;
+
         private readonly Func<TInput, TOutput> _handler;
         private readonly Thread _workerThread;
 
-        private readonly object _inLocker = new object();
-        private readonly object _outLocker = new object();
+        private readonly object _enqueueLocker = new object();
+        private readonly object _dequeueLocker = new object();
 
         private readonly BlockingQueueWrapper<TInput> _workToDo;
         private readonly BlockingQueueWrapper<TOutput> _doneWork;
 
         private readonly SemaphoreSlim _limiter;
 
-        private Exception _exception;
+        private Exception _handlerException;
 
         private bool _isDisposed;
         private bool _isCompleted;
 
         public Worker(Func<TInput, TOutput> handler)
         {
-            _limiter = new SemaphoreSlim(8);
+            _limiter = new SemaphoreSlim(WorkLimit);
 
             _workToDo = new BlockingQueueWrapper<TInput>();
             _doneWork = new BlockingQueueWrapper<TOutput>();
@@ -47,10 +49,10 @@ namespace SignGen.Workers
         
         private void EnqueueDirectly(TInput data)
         {
-            lock (_inLocker)
+            lock (_enqueueLocker)
             {
                 _workToDo.Enqueue(data);
-                Monitor.Pulse(_inLocker);
+                Monitor.Pulse(_enqueueLocker);
             }
         }
         
@@ -58,18 +60,18 @@ namespace SignGen.Workers
         {
             TOutput result;
 
-            lock (_outLocker)
+            lock (_dequeueLocker)
             {
-                while (_doneWork.Count == 0) Monitor.Wait(_outLocker);
+                while (_doneWork.Count == 0) Monitor.Wait(_dequeueLocker);
 
                 result = _doneWork.Dequeue();
 
-                Monitor.Pulse(_outLocker);
+                Monitor.Pulse(_dequeueLocker);
             }
 
             _limiter.Release();
 
-            if (_exception != null) throw _exception;
+            if (_handlerException != null) throw _handlerException;
 
             return result;
         }
@@ -88,14 +90,14 @@ namespace SignGen.Workers
 
             while (true)
             {
-                lock (_inLocker)
+                lock (_enqueueLocker)
                 {
-                    if (_workToDo.Count == 0) Monitor.Wait(_inLocker);
+                    if (_workToDo.Count == 0) Monitor.Wait(_enqueueLocker);
 
                     input = _workToDo.Dequeue();
                 }
 
-                lock (_outLocker)
+                lock (_dequeueLocker)
                 {
                     try
                     {
@@ -105,14 +107,14 @@ namespace SignGen.Workers
                     }
                     catch (Exception e)
                     {
-                        _exception = e;
+                        _handlerException = e;
                     }
                     finally
                     {
                         _doneWork.Enqueue(result);
                     }
 
-                    Monitor.Pulse(_outLocker);
+                    Monitor.Pulse(_dequeueLocker);
                 }
 
                 if (result == null) return;
