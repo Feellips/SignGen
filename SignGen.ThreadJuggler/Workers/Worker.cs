@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Threading;
-using SignGen.ThreadJuggler.Collections;
-using SignGen.ThreadJuggler.Workers.Exceptions;
+using SignGen.MultithreadExecution.Collections;
+using SignGen.MultithreadExecution.Workers.Exceptions;
 
-namespace SignGen.ThreadJuggler.Workers
+namespace SignGen.MultithreadExecution.Workers
 {
     public class Worker<TInput, TOutput> : IBlockingQueueWorker<TInput, TOutput> where TInput : class where TOutput : class
     {

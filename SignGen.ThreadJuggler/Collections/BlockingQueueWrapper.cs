@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 
-namespace SignGen.ThreadJuggler.Collections
+namespace SignGen.MultithreadExecution.Collections
 {
     public class BlockingQueueWrapper<T> : IEnumerable<T>
     {

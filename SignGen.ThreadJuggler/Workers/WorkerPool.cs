@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace SignGen.ThreadJuggler.Workers
+namespace SignGen.MultithreadExecution.Workers
 {
     public class WorkerPool<TInput, TOutput> : IBlockingQueueWorker<TInput, TOutput> where TInput : class where TOutput : class
     {

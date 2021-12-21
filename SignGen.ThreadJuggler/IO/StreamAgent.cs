@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
-using SignGen.ThreadJuggler.Workers;
+using SignGen.MultithreadExecution.Workers;
 
-namespace SignGen.ThreadJuggler.IO
+namespace SignGen.MultithreadExecution.IO
 {
     public abstract class StreamAgent<TInput, TOutput> where TInput : class where TOutput : class
     {

@@ -2,10 +2,10 @@ using System;
 using System.IO;
 using System.Text;
 using SignGen.Factories;
-using SignGen.ThreadJuggler.Factories;
-using SignGen.ThreadJuggler.IO;
-using SignGen.ThreadJuggler.Models;
-using SignGen.ThreadJuggler.Workers;
+using SignGen.MultithreadExecution.Factories;
+using SignGen.MultithreadExecution.IO;
+using SignGen.MultithreadExecution.Models;
+using SignGen.MultithreadExecution.Workers;
 
 namespace SignGen
 {

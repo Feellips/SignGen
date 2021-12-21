@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SignGen.ThreadJuggler.Workers
+namespace SignGen.MultithreadExecution.Workers
 {
     public interface IBlockingQueueWorker<TInput, TOutput> : IDisposable where TInput : class where TOutput : class
     {
