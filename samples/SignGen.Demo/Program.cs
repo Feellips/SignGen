@@ -7,6 +7,8 @@ namespace SignGen.Demo
     {
         public static void Main(string[] args)
         {
+            args = new string[] { @"C:\Users\filf\Downloads\ubuntu-20.04.3-desktop-amd64.iso", "1024" };
+
             try
             {
                 args.Rules().

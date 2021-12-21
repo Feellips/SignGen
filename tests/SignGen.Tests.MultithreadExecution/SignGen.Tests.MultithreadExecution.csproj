@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SignGen.ThreadJuggler\SignGen.MultithreadExecution.csproj" />
+    <ProjectReference Include="..\..\src\SignGen.MultithreadExecution\SignGen.MultithreadExecution.csproj" />
   </ItemGroup>
 
 </Project>
