@@ -1,9 +1,9 @@
 using System;
 using System.Threading;
-using SignGen.ThreadJuggler.Workers;
+using SignGen.MultithreadExecution.Workers;
 using Xunit;
 
-namespace SignGen.Tests.ThreadJuggler
+namespace SignGen.Tests.MultithreadExecution
 {
     public class WorkerPoolTests
     {

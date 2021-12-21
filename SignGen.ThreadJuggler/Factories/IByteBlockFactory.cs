@@ -1,6 +1,6 @@
-﻿using SignGen.ThreadJuggler.Models;
+﻿using SignGen.MultithreadExecution.Models;
 
-namespace SignGen.ThreadJuggler.Factories
+namespace SignGen.MultithreadExecution.Factories
 {
     public interface IByteBlockFactory
     {

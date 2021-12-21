@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SignGen.ThreadJuggler.Workers.Exceptions
+namespace SignGen.MultithreadExecution.Workers.Exceptions
 {
     public class WorkerStoppedException : Exception
     {

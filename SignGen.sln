@@ -9,13 +9,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignGen.Tests", "SignGen.Te
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignGen", "SignGen\SignGen.csproj", "{60B3338B-871C-4824-B0BB-F7C20C6494B3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignGen.ThreadJuggler", "SignGen.ThreadJuggler\SignGen.ThreadJuggler.csproj", "{EDC485F9-46F6-4C3A-A4E6-16703C802254}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignGen.MultithreadExecution", "SignGen.ThreadJuggler\SignGen.MultithreadExecution.csproj", "{EDC485F9-46F6-4C3A-A4E6-16703C802254}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{CD29BBFD-154B-4966-BBBB-4585EFE1175C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{3C195969-B0B7-4373-BEA7-99BB1127F749}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SignGen.Tests.ThreadJuggler", "SignGen.Tests.ThreadJuggler\SignGen.Tests.ThreadJuggler.csproj", "{749F3808-B5D7-4B37-ABD8-B4D16D7CDC5A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignGen.Tests.MultithreadExecution", "SignGen.Tests.ThreadJuggler\SignGen.Tests.MultithreadExecution.csproj", "{749F3808-B5D7-4B37-ABD8-B4D16D7CDC5A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{46CABB26-0966-4B88-B7AD-CBB5AD62B5BC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -48,6 +50,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{CCE8D148-128B-4617-AB04-C2528A907B73} = {46CABB26-0966-4B88-B7AD-CBB5AD62B5BC}
 		{80E62ED1-9143-4E1D-8F19-2CE600B402BF} = {3C195969-B0B7-4373-BEA7-99BB1127F749}
 		{60B3338B-871C-4824-B0BB-F7C20C6494B3} = {CD29BBFD-154B-4966-BBBB-4585EFE1175C}
 		{EDC485F9-46F6-4C3A-A4E6-16703C802254} = {CD29BBFD-154B-4966-BBBB-4585EFE1175C}

@@ -1,4 +1,4 @@
-﻿namespace SignGen.ThreadJuggler.Models
+﻿namespace SignGen.MultithreadExecution.Models
 {
     public interface IByteBlock
     {

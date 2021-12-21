@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
-using SignGen.ThreadJuggler.Workers.Exceptions;
+using SignGen.MultithreadExecution.Workers.Exceptions;
 using Xunit;
 
 namespace SignGen.Tests
