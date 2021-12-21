@@ -1,3 +1,4 @@
+using SignGen.Models;
 using SignGen.MultithreadExecution.Factories;
 using SignGen.MultithreadExecution.Models;
 

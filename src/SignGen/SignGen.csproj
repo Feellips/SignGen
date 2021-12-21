@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SignGen.ThreadJuggler\SignGen.MultithreadExecution.csproj" />
+    <ProjectReference Include="..\SignGen.MultithreadExecution\SignGen.MultithreadExecution.csproj" />
   </ItemGroup>
 
 </Project>

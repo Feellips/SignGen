@@ -1,4 +1,6 @@
-﻿namespace SignGen.MultithreadExecution.Models
+﻿using SignGen.MultithreadExecution.Models;
+
+namespace SignGen.Models
 {
     public class ByteBlock : IByteBlock
     {
