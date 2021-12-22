@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Threading;
 using SignGen.MultithreadExecution.Workers.Exceptions;
@@ -14,6 +14,7 @@ namespace SignGen.Tests
         private void SignatureGenerator_SingleThreadedAndValidValues_TimeCheck()
         {
             RunSignatureGenerator(1, null, null);
+
             Assert.True(true);
         }
 
@@ -21,6 +22,7 @@ namespace SignGen.Tests
         private void SignatureGenerator_MultiThreadedAndValidValues_TimeCheck()
         {
             RunSignatureGenerator(8, null, null);
+
             Assert.True(true);
         }
 
@@ -28,6 +30,7 @@ namespace SignGen.Tests
         private void SignatureGenerator_MultiThreadedAndInputStreamInterrupts_ThrowException()
         {
             var action = new Action(() => RunSignatureGenerator(8, InterruptStream, null));
+
             Assert.Throws<ObjectDisposedException>(action);
         }
 
@@ -35,6 +38,7 @@ namespace SignGen.Tests
         private void SignatureGenerator_MultiThreadedAndOutputStreamInterrupts_ThrowException()
         {
             var action = new Action(() => RunSignatureGenerator(8, null, InterruptStream));
+          
             Assert.Throws<WorkerStoppedException>(action);
         }
 
