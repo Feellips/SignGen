@@ -8,68 +8,59 @@ namespace SignGen.Tests
 {
     public class SignatureGeneratorTests
     {
-        #region Fields
-
-        private const string InputSingle = "Files/SingleThread/singleInput.txt";
-
-        private const string OutputSingle = "Files/SingleThread/singleOutput.txt";
-        
-        private const string InputMulti = "Files/MultiThread/multiInput.txt";
-        private const string InputMulti2 = "Files/MultiThread/multiInput2.txt";
-        private const string InputMulti3 = "Files/MultiThread/multiInput3.txt";
-
-        private const string OutputMulti = "Files/MultiThread/multiOutput.txt";
-        private const string OutputMulti2 = "Files/MultiThread/multiOutput2.txt";
-        private const string OutputMulti3 = "Files/MultiThread/multiOutput3.txt";
-
-        #endregion
+        private const int SizeInMb = 100;
 
         [Fact]
         private void SignatureGenerator_SingleThreadedAndValidValues_TimeCheck()
         {
-            RunSignatureGenerator(InputSingle, OutputSingle, 1, null, null);
+            RunSignatureGenerator(1, null, null);
             Assert.True(true);
         }
 
         [Fact]
         private void SignatureGenerator_MultiThreadedAndValidValues_TimeCheck()
         {
-            RunSignatureGenerator(InputMulti, OutputMulti, 8, null, null);
+            RunSignatureGenerator(8, null, null);
             Assert.True(true);
         }
 
         [Fact]
         private void SignatureGenerator_MultiThreadedAndInputStreamInterrupts_ThrowException()
         {
-            var action = new Action(() => RunSignatureGenerator(InputMulti2, OutputMulti2, 8, InterruptStream, null));
+            var action = new Action(() => RunSignatureGenerator(8, InterruptStream, null));
             Assert.Throws<ObjectDisposedException>(action);
         }
 
         [Fact]
         private void SignatureGenerator_MultiThreadedAndOutputStreamInterrupts_ThrowException()
         {
-            var action = new Action(() => RunSignatureGenerator(InputMulti3, OutputMulti3, 8, null, InterruptStream));
+            var action = new Action(() => RunSignatureGenerator(8, null, InterruptStream));
             Assert.Throws<WorkerStoppedException>(action);
         }
 
         private void InterruptStream(Stream stream)
         {
-            Thread.Sleep(5);
+            Thread.Sleep(10);
+            stream.Close();
             stream.Dispose();
         }
 
-        private void RunSignatureGenerator(string inputPath,
-                                           string outputPath,
-                                           int threads,
+        private void RunSignatureGenerator(int threads,
                                            Action<Stream> action,
                                            Action<Stream> action2)
         {
             var ex = default(Exception);
 
-            var input = File.Open(inputPath, FileMode.Open, FileAccess.Read);
-            var output = File.Open(outputPath, FileMode.Open, FileAccess.Write);
+            using var fileInputStreamImitator = new MemoryStream();
+            using var fileOutputStreamImitator = new MemoryStream();
 
-            using var sigen = new SignatureGenerator(input, output, 4096);
+            byte[] data = new byte[SizeInMb * 1024 * 1024];
+            var rng = new Random();
+            rng.NextBytes(data);
+            fileInputStreamImitator.Write(data, 0, data.Length);
+            fileInputStreamImitator.Position = 0;
+
+            using var sigen = new SignatureGenerator(fileInputStreamImitator, fileOutputStreamImitator, 1024);
 
             var thread = new Thread(() =>
             {
@@ -85,8 +76,8 @@ namespace SignGen.Tests
 
             thread.Start();
 
-            action?.Invoke(input);
-            action2?.Invoke(output);
+            action?.Invoke(fileInputStreamImitator);
+            action2?.Invoke(fileOutputStreamImitator);
 
             thread.Join();
 
