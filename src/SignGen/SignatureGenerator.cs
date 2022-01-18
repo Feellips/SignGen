@@ -25,7 +25,7 @@ namespace SignGen
         {
             if (input.CanRead == false) throw new ArgumentException($"Can't read from {nameof(input)}");
             if (output.CanWrite == false) throw new ArgumentException($"Can't write to {nameof(output)}");
-            if (blockSize < 8 || blockSize > 1024 * 10)
+            if (blockSize < 8 || blockSize > 1024 * 10 * 10)
                 throw new ArgumentException($"{nameof(blockSize)} should be from 8 byte to 10 MGb");
 
             _input = input;

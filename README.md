@@ -1,3 +1,7 @@
 # SignGen
 
-multithreaded signature generator (for veeam)
+Multithreaded signature generator
+
+*No TPL
+*Multithreaded
+*OOP
